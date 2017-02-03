@@ -136,7 +136,7 @@ parallel_directive : /* #pragma */ OMP PARALLEL {
                      parallel_clause_optseq 
                    ;
 
-parallel_clause_optseq : %empty
+parallel_clause_optseq : /* %empty */ 
                        | parallel_clause_seq
                        ;
 
@@ -177,7 +177,7 @@ for_directive : /* #pragma */ OMP FOR {
                 for_clause_optseq
               ;
 
-for_clause_optseq : %empty
+for_clause_optseq : /* %empty */
                   | for_clause_seq
                   ;
 
@@ -233,7 +233,7 @@ sections_directive : /* #pragma */ OMP SECTIONS {
                      } sections_clause_optseq
                    ;
 
-sections_clause_optseq : %empty
+sections_clause_optseq : /* %empty */
                        | sections_clause_seq
                        ;
 
@@ -262,7 +262,7 @@ single_directive : /* #pragma */ OMP SINGLE {
                    } single_clause_optseq
                  ;
 
-single_clause_optseq : %empty
+single_clause_optseq : /* %empty */
                      | single_clause_seq
                      ;
 
@@ -290,7 +290,7 @@ task_directive : /* #pragma */ OMP TASK {
                  } task_clause_optseq
                ;
 
-task_clause_optseq :  %empty 
+task_clause_optseq :  /* %empty  */
                    | task_clause
                    | task_clause_optseq task_clause
                    | task_clause_optseq ',' task_clause
@@ -319,7 +319,7 @@ parallel_for_directive : /* #pragma */ OMP PARALLEL FOR {
                          } parallel_for_clauseoptseq
                        ;
 
-parallel_for_clauseoptseq : %empty
+parallel_for_clauseoptseq : /* %empty */
                           | parallel_for_clause_seq
                           ;
 
@@ -344,7 +344,7 @@ parallel_sections_directive : /* #pragma */ OMP PARALLEL SECTIONS {
                               } parallel_sections_clause_optseq
                             ;
 
-parallel_sections_clause_optseq : %empty
+parallel_sections_clause_optseq : /* %empty */
                                 | parallel_sections_clause_seq
                                 ;
 
@@ -371,7 +371,7 @@ critical_directive : /* #pragma */ OMP CRITICAL {
                      } region_phraseopt
                    ;
 
-region_phraseopt : %empty
+region_phraseopt : /* %empty */
                  | region_phrase
                  ;
 
@@ -402,7 +402,7 @@ flush_directive : /* #pragma */ OMP FLUSH {
                   } flush_varsopt
                 ;
 
-flush_varsopt : %empty
+flush_varsopt : /* %empty */
               | flush_vars
               ;
 

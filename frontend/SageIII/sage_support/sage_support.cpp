@@ -422,36 +422,36 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
 bool roseInstallPrefix(std::string& result) {
 #ifdef HAVE_DLADDR
   {
- // This is built on the stack and initialized using the function: dladdr().
+    // This is built on the stack and initialized using the function: dladdr().
     Dl_info info;
 
- // DQ (4/8/2011): Initialize this before it is used as a argument to strdup() below. This is initialized 
- // by dladdr(), so this is likely redundant; but we can initialize it anyway.
- // info.dli_fname = NULL;
+    // DQ (4/8/2011): Initialize this before it is used as a argument to strdup() below. This is initialized 
+    // by dladdr(), so this is likely redundant; but we can initialize it anyway.
+    // info.dli_fname = NULL;
     info.dli_fname = "";
 
     int retval = dladdr((void*)(&roseInstallPrefix), &info);
     if (retval == 0) goto default_check;
 
- // DQ (4/9/2011): I think the issue here is that the pointer "info.dli_fname" pointer (char*) is pointing to 
- // a position inside a DLL and thus is a region of memory controled/monitored or allocated by Insure++. Thus
- // Insure++ is marking this as an issue while it is not an issue. The reported issue by Insure++ is: "READ_WILD",
- // implying that a pointer set to some wild area of memory is being read.
-#if __INSURE__
- // Debugging information. Trying to understand this insure issue and the value of "info.dli_fname" data member.
- // if (retval != 0)
- //    fprintf(stderr, "      %08p file: %s\tfunction: %s\n",info.dli_saddr, info.dli_fname ? info.dli_fname : "???", info.dli_sname ? info.dli_sname : "???"); 
+    // DQ (4/9/2011): I think the issue here is that the pointer "info.dli_fname" pointer (char*) is pointing to 
+    // a position inside a DLL and thus is a region of memory controled/monitored or allocated by Insure++. Thus
+    // Insure++ is marking this as an issue while it is not an issue. The reported issue by Insure++ is: "READ_WILD",
+    // implying that a pointer set to some wild area of memory is being read.
+    #if __INSURE__
+      // Debugging information. Trying to understand this insure issue and the value of "info.dli_fname" data member.
+      // if (retval != 0)
+      //    fprintf(stderr, "      %08p file: %s\tfunction: %s\n",info.dli_saddr, info.dli_fname ? info.dli_fname : "???", info.dli_sname ? info.dli_sname : "???"); 
 
-    _Insure_checking_enable(0); // disable Insure++ checking
-#endif
- // DQ (4/8/2011): Check for NULL pointer before handling it as a parameter to strdup(), 
- // but I think it is always non-NULL (added assertion and put back the original code).
- // char* libroseName = (info.dli_fname == NULL) ? NULL : strdup(info.dli_fname);
+      _Insure_checking_enable(0); // disable Insure++ checking
+    #endif
+    // DQ (4/8/2011): Check for NULL pointer before handling it as a parameter to strdup(), 
+    // but I think it is always non-NULL (added assertion and put back the original code).
+    // char* libroseName = (info.dli_fname == NULL) ? NULL : strdup(info.dli_fname);
     ROSE_ASSERT(info.dli_fname != NULL);
     char* libroseName = strdup(info.dli_fname);
-#if __INSURE__
-    _Insure_checking_enable(1); // re-enable Insure++ checking
-#endif
+    #if __INSURE__
+      _Insure_checking_enable(1); // re-enable Insure++ checking
+    #endif
 
     if (libroseName == NULL) goto default_check;
     char* libdir = dirname(libroseName);
@@ -468,34 +468,37 @@ bool roseInstallPrefix(std::string& result) {
     string prefix = prefixCS;
     free(libdirCopy2); 
     free(libroseName);
-// Liao, 12/2/2009
-// Check the librose's parent directory name to tell if it is within a build or installation tree
-// This if statement has the assumption that libtool is used to build librose so librose.so is put under .libs
-// which is not true for cmake building system
-// For cmake, librose is created directly under build/src
-//    if (libdirBasename == ".libs") {
+    // Liao, 12/2/2009
+    // Check the librose's parent directory name to tell if it is within a build or installation tree
+    // This if statement has the assumption that libtool is used to build librose so librose.so is put under .libs
+    // which is not true for cmake building system
+    // For cmake, librose is created directly under build/src
+    //    if (libdirBasename == ".libs") {
     if (libdirBasename == ".libs" || libdirBasename == "src") {
       return false;
     } else {
       // the translator must locate in the installation_tree/lib
       // TODO what about lib64??
-       if (libdirBasename != "lib")
-          {
-            printf ("Error: unexpected libdirBasename = %s (result = %s, prefix = %s) \n",libdirBasename.c_str(),result.c_str(),prefix.c_str());
-          }
+      if (libdirBasename != "lib")
+      {
+        printf ("Error: unexpected libdirBasename = %s (result = %s, prefix = %s) \n",libdirBasename.c_str(),result.c_str(),prefix.c_str());
+      }
 
-   // DQ (12/5/2009): Is this really what we need to assert?
-   // ROSE_ASSERT (libdirBasename == "lib");
+     // DQ (12/5/2009): Is this really what we need to assert?
+     // ROSE_ASSERT (libdirBasename == "lib");
 
-      result = prefix;
-      return true;
+        result = prefix;
+        return true;
     }
   }
 #endif
 default_check:
 #ifdef HAVE_DLADDR
-  // Emit a warning that the hard-wired prefix is being used
-  cerr << "Warning: roseInstallPrefix() is using the hard-wired prefix and ROSE_IN_BUILD_TREE even though it should be relocatable" << endl;
+  if ( SgProject::get_verbose() >= 1 )
+  {
+    // Emit a warning that the hard-wired prefix is being used
+    cerr << "Warning: roseInstallPrefix() is using the hard-wired prefix and ROSE_IN_BUILD_TREE even though it should be relocatable" << endl;
+  }
 #endif
   // dladdr is not supported, we check an environment variables to tell if the
   // translator is running from a build tree or an installation tree
@@ -709,502 +712,503 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 #else
 determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project )
 #endif
-   {
-     SgFile* file = NULL;
+{
+  SgFile* file = NULL;
 
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
   // DQ (4/21/2006): New version of source file name handling (set the source file name early)
   // printf ("In determineFileType(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
   // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
-     ROSE_ASSERT(project != NULL);
-     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
-
-#if 0
-  // this->display("In SgFile::setupSourceFilename()");
-     printf ("In determineFileType(): listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-     printf ("In determineFileType(): listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
-#endif
+  ROSE_ASSERT(project != NULL);
+  Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only()) ;
+  
+  #if 0
+    // this->display("In SgFile::setupSourceFilename()");
+    printf ("In determineFileType(): listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+    printf ("In determineFileType(): listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+  #endif
 
   // DQ (2/6/2009): This fails for the build function SageBuilder::buildFile(), so OK to comment it out.
   // DQ (12/23/2008): I think that we may be able to assert this is true, if so then we can simplify the code below.
-     ROSE_ASSERT(fileList.empty() == false);
+  ROSE_ASSERT(fileList.empty() == false);
 
-     if (fileList.empty() == false)
+  if (fileList.empty() == false)
+  {
+    ROSE_ASSERT(fileList.size() == 1);
+
+    // DQ (8/31/2006): Convert the source file to have a path if it does not already
+    // p_sourceFileNameWithPath    = *(fileList.begin());
+    string sourceFilename = *(fileList.begin());
+
+    // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+
+    // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
+    sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
+
+    // printf ("After conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+
+    // This should be an absolute path
+    string targetSubstring = "/";
+    // if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
+    //      printf ("@@@@@@@@@@@@@@@@@@@@ In SgFile::setupSourceFilename(int,char**): sourceFilename = %s @@@@@@@@@@@@@@@@@@@@\n",sourceFilename.c_str());
+    // ROSE_ASSERT(sourceFilename.substr(0,targetSubstring.size()) == targetSubstring);
+
+    // Rama: 12/06/06: Fixup for problem with file names.
+    // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
+    // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
+
+    if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
+      printf ("sourceFilename encountered an error in filename\n");
+
+    // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro
+    // if we detect we are processing a source file using a C++ filename extension.
+    string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
+
+    // printf ("filenameExtension = %s \n",filenameExtension.c_str());
+    // ROSE_ASSERT(false);
+
+    // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
+    // file->set_requires_C_preprocessor(true);
+
+    // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
+    if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
+    {
+      SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+      file = sourceFile;
+
+      // printf ("----------- Great location to set the sourceFilename = %s \n",sourceFilename.c_str());
+
+      // DQ (12/23/2008): Moved initialization of source position (call to initializeSourcePosition())
+      // to earliest position in setup of SgFile.
+
+      // printf ("Calling file->set_sourceFileUsesFortranFileExtension(true) \n");
+      file->set_sourceFileUsesFortranFileExtension(true);
+
+      // Use the filename suffix as a default means to set this value
+      file->set_outputLanguage(SgFile::e_Fortran_output_language);
+
+      file->set_Fortran_only(true);
+
+      // DQ (11/30/2010): This variable activates scopes built within the SageBuilder
+      // interface to be built to use case insensitive symbol table handling.
+      SageBuilder::symbol_table_case_insensitive_semantics = true;
+
+      //DBG_MAQAO DEBUG : Comment and directives are moved at wrong place due to the preprocesor
+      // determine whether to run this file through the C preprocessor
+      bool requires_C_preprocessor = false;
+      #if 0
+          // DXN (02/20/2011): rmod file should never require it
+          (filenameExtension != "rmod")
+            &&
+            (
+              // if the file extension implies it
+              CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension)
+              ||
+                //if the command line includes "-D" options
+                ! getProject()->get_macroSpecifierList().empty()
+                #if 0
+                // SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
+                  ||
+                   //if the command line includes "-I" options
+                    ! getProject()->get_includeDirectorySpecifierList().empty()
+                #endif
+            );
+      #endif
+ 
+      file->set_requires_C_preprocessor(requires_C_preprocessor);
+
+      // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
+      // If CPP processing is required then the global scope should have a source position using the intermediate
+      // file name (generated by generate_C_preprocessor_intermediate_filename()).
+      sourceFile->initializeGlobalScope();
+
+      // Now set the specific types of Fortran file extensions
+      if (CommandlineProcessing::isFortran77FileNameSuffix(filenameExtension) == true)
+      {
+        // printf ("Calling file->set_sourceFileUsesFortran77FileExtension(true) \n");
+        file->set_sourceFileUsesFortran77FileExtension(true);
+
+        // Use the filename suffix as a default means to set this value
+        file->set_outputFormat(SgFile::e_fixed_form_output_format);
+        file->set_backendCompileFormat(SgFile::e_fixed_form_output_format);
+
+        file->set_F77_only(true);
+      }
+
+      if (CommandlineProcessing::isFortran90FileNameSuffix(filenameExtension) == true)
+      {
+        // printf ("Calling file->set_sourceFileUsesFortran90FileExtension(true) \n");
+        file->set_sourceFileUsesFortran90FileExtension(true);
+
+        // Use the filename suffix as a default means to set this value
+        file->set_outputFormat(SgFile::e_free_form_output_format);
+        file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+        file->set_F90_only(true);
+      }
+
+      if (CommandlineProcessing::isFortran95FileNameSuffix(filenameExtension) == true)
+      {
+        // printf ("Calling file->set_sourceFileUsesFortran95FileExtension(true) \n");
+        file->set_sourceFileUsesFortran95FileExtension(true);
+
+        // Use the filename suffix as a default means to set this value
+        file->set_outputFormat(SgFile::e_free_form_output_format);
+        file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+        file->set_F95_only(true);
+      }
+
+      if (CommandlineProcessing::isFortran2003FileNameSuffix(filenameExtension) == true)
+      {
+        // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
+        file->set_sourceFileUsesFortran2003FileExtension(true);
+
+        // Use the filename suffix as a default means to set this value
+        file->set_outputFormat(SgFile::e_free_form_output_format);
+        file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+        file->set_F2003_only(true);
+      }
+
+      if (CommandlineProcessing::isCoArrayFortranFileNameSuffix(filenameExtension) == true)
+      {
+        // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
+        file->set_sourceFileUsesCoArrayFortranFileExtension(true);
+
+        // Use the filename suffix as a default means to set this value
+        file->set_outputFormat(SgFile::e_free_form_output_format);
+        file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+        // DQ (1/23/2009): I think that since CAF is an extension of F2003, we want to mark this as F2003 as well.
+        file->set_F2003_only(true);
+        file->set_CoArrayFortran_only(true);
+      }
+
+      if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
+      {
+        printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
+        ROSE_ASSERT(false);
+
+        // This is not yet supported.
+        // file->set_sourceFileUsesFortran2008FileExtension(true);
+
+        // Use the filename suffix as a default means to set this value
+        file->set_outputFormat(SgFile::e_free_form_output_format);
+        file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+      }
+    }
+    else
+    {
+      if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
+      {
+        // file = new SgSourceFile ( argv,  project );
+        SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+        file = sourceFile;
+
+        file->set_sourceFileUsesPHPFileExtension(true);
+        file->set_outputLanguage(SgFile::e_PHP_output_language);
+        file->set_PHP_only(true);
+
+        // DQ (12/23/2008): We don't handle CPP directives and comments for PHP yet.
+        // file->get_skip_commentsAndDirectives(true);
+
+        // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+        // Note that file->get_requires_C_preprocessor() should be false.
+        ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+        sourceFile->initializeGlobalScope();
+      }
+      else
+      {
+        // printf ("Calling file->set_sourceFileUsesFortranFileExtension(false) \n");
+
+        // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
+        if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
         {
-          ROSE_ASSERT(fileList.size() == 1);
+          // file = new SgSourceFile ( argv,  project );
+          SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+          file = sourceFile;
 
-       // DQ (8/31/2006): Convert the source file to have a path if it does not already
-       // p_sourceFileNameWithPath    = *(fileList.begin());
-          string sourceFilename = *(fileList.begin());
+          // This is a C++ file (so define __cplusplus, just like GNU gcc would)
+          // file->set_requires_cplusplus_macro(true);
+          file->set_sourceFileUsesCppFileExtension(true);
 
-       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+          // Use the filename suffix as a default means to set this value
+          file->set_outputLanguage(SgFile::e_Cxx_output_language);
 
-       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
-          sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
+          file->set_Cxx_only(true);
 
-       // printf ("After conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+          // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+          // Note that file->get_requires_C_preprocessor() should be false.
+          ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+          sourceFile->initializeGlobalScope();
+        }
+        else
+        {
+          // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
+          if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
+              ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
+          {
+            // file = new SgSourceFile ( argv,  project );
+            SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+            file = sourceFile;
 
-       // This should be an absolute path
-          string targetSubstring = "/";
-       // if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-       //      printf ("@@@@@@@@@@@@@@@@@@@@ In SgFile::setupSourceFilename(int,char**): sourceFilename = %s @@@@@@@@@@@@@@@@@@@@\n",sourceFilename.c_str());
-       // ROSE_ASSERT(sourceFilename.substr(0,targetSubstring.size()) == targetSubstring);
-
-       // Rama: 12/06/06: Fixup for problem with file names.
-            // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
-            // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
-
-          if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-               printf ("sourceFilename encountered an error in filename\n");
-
-       // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro
-       // if we detect we are processing a source file using a C++ filename extension.
-          string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
-
-       // printf ("filenameExtension = %s \n",filenameExtension.c_str());
-       // ROSE_ASSERT(false);
-
-       // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
-       // file->set_requires_C_preprocessor(true);
-
-       // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
-          if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
-             {
-               SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-               file = sourceFile;
-
-            // printf ("----------- Great location to set the sourceFilename = %s \n",sourceFilename.c_str());
-
-            // DQ (12/23/2008): Moved initialization of source position (call to initializeSourcePosition())
-            // to earliest position in setup of SgFile.
-
-            // printf ("Calling file->set_sourceFileUsesFortranFileExtension(true) \n");
-               file->set_sourceFileUsesFortranFileExtension(true);
+            // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
+            file->set_sourceFileUsesCppFileExtension(false);
 
             // Use the filename suffix as a default means to set this value
-               file->set_outputLanguage(SgFile::e_Fortran_output_language);
+            file->set_outputLanguage(SgFile::e_C_output_language);
 
-               file->set_Fortran_only(true);
+            file->set_C_only(true);
 
-            // DQ (11/30/2010): This variable activates scopes built within the SageBuilder
-            // interface to be built to use case insensitive symbol table handling.
-               SageBuilder::symbol_table_case_insensitive_semantics = true;
+            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
+            if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
+              file->set_UPC_only(true);
 
-               // determine whether to run this file through the C preprocessor
-               bool requires_C_preprocessor =
-                          // DXN (02/20/2011): rmod file should never require it
-                     (filenameExtension != "rmod")
-                      &&
-                     (
-                          // if the file extension implies it
-                          CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension)
-                       ||
-                          //if the command line includes "-D" options
-                          ! getProject()->get_macroSpecifierList().empty()
-#if 0
-// SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
-                       ||
-                          //if the command line includes "-I" options
-                          ! getProject()->get_includeDirectorySpecifierList().empty()
-#endif
-                      );
+            // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+            // Note that file->get_requires_C_preprocessor() should be false.
+            ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+            sourceFile->initializeGlobalScope();
+          }
+          else
+          {
+            if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension) == true )
+            {
+              SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+              file = sourceFile;
+              file->set_Cuda_only(true);
 
-               file->set_requires_C_preprocessor(requires_C_preprocessor);
+              // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+              // Note that file->get_requires_C_preprocessor() should be false.
+              ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+              sourceFile->initializeGlobalScope();
+            }
+            else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
+            {
+              SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+              file = sourceFile;
+              file->set_OpenCL_only(true);
 
-            // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
-            // If CPP processing is required then the global scope should have a source position using the intermediate
-            // file name (generated by generate_C_preprocessor_intermediate_filename()).
-               sourceFile->initializeGlobalScope();
+              // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+              // Note that file->get_requires_C_preprocessor() should be false.
+              ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+              sourceFile->initializeGlobalScope();
+            }
+            else if ( CommandlineProcessing::isJavaFileNameSuffix(filenameExtension) == true )
+            {
+              // DQ (10/11/2010): Adding support for Java.
+              // file = new SgSourceFile ( argv,  project );
+              SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+              file = sourceFile;
 
-            // Now set the specific types of Fortran file extensions
-               if (CommandlineProcessing::isFortran77FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling file->set_sourceFileUsesFortran77FileExtension(true) \n");
-                    file->set_sourceFileUsesFortran77FileExtension(true);
+              // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
+              file->set_sourceFileUsesCppFileExtension(false);
 
-                 // Use the filename suffix as a default means to set this value
-                    file->set_outputFormat(SgFile::e_fixed_form_output_format);
-                    file->set_backendCompileFormat(SgFile::e_fixed_form_output_format);
+              // Note that we can use the C++ unparser to provide output that will support inspection of 
+              // code from the AST, but this is a temporary solution.  The only correct setting is to use
+              // the ongoing support within the Java specific unparser.
+              // file->set_outputLanguage(SgFile::e_C_output_language);
+              file->set_outputLanguage(SgFile::e_Java_output_language);
 
-                    file->set_F77_only(true);
-                  }
+              file->set_Java_only(true);
 
-               if (CommandlineProcessing::isFortran90FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling file->set_sourceFileUsesFortran90FileExtension(true) \n");
-                    file->set_sourceFileUsesFortran90FileExtension(true);
+              // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
+              file->set_compileOnly(true);
 
-                 // Use the filename suffix as a default means to set this value
-                    file->set_outputFormat(SgFile::e_free_form_output_format);
-                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+              // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+              // Note that file->get_requires_C_preprocessor() should be false.
+              ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+              sourceFile->initializeGlobalScope();
 
-                    file->set_F90_only(true);
-                  }
+              // file->display("Marked as java file based on file suffix");
+            }
+            else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
+            {
+              // file = new SgSourceFile ( argv,  project );
+              SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+              file = sourceFile;
 
-               if (CommandlineProcessing::isFortran95FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling file->set_sourceFileUsesFortran95FileExtension(true) \n");
-                    file->set_sourceFileUsesFortran95FileExtension(true);
+              file->set_sourceFileUsesPythonFileExtension(true);
+              file->set_outputLanguage(SgFile::e_Python_output_language);
+              file->set_Python_only(true);
 
-                 // Use the filename suffix as a default means to set this value
-                    file->set_outputFormat(SgFile::e_free_form_output_format);
-                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
-                    file->set_F95_only(true);
-                  }
-
-               if (CommandlineProcessing::isFortran2003FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
-                    file->set_sourceFileUsesFortran2003FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    file->set_outputFormat(SgFile::e_free_form_output_format);
-                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
-                    file->set_F2003_only(true);
-                  }
-
-               if (CommandlineProcessing::isCoArrayFortranFileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
-                    file->set_sourceFileUsesCoArrayFortranFileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    file->set_outputFormat(SgFile::e_free_form_output_format);
-                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
-                 // DQ (1/23/2009): I think that since CAF is an extension of F2003, we want to mark this as F2003 as well.
-                    file->set_F2003_only(true);
-                    file->set_CoArrayFortran_only(true);
-                  }
-
-               if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
-                  {
-                    printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
-                    ROSE_ASSERT(false);
-
-                 // This is not yet supported.
-                 // file->set_sourceFileUsesFortran2008FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    file->set_outputFormat(SgFile::e_free_form_output_format);
-                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-                  }
-             }
+              // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+              // Note that file->get_requires_C_preprocessor() should be false.
+              ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+              sourceFile->initializeGlobalScope();
+            }
             else
-             {
-               if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
+            {
+              // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
+
+              // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
+
+              // Detect if this is a binary (executable) file!
+              bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
+              bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
+
+              // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
+              // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
+              if (!isBinaryExecutable && !isLibraryArchive)
+                isBinaryExecutable = true;
+
+              // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
+              if (isBinaryExecutable == true || isLibraryArchive == true)
+              {
+                // Build a SgBinaryComposite to represent either the binary executable or the library archive.
+                SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
+                file = binary;
+
+                // This should have already been setup!
+                // file->initializeSourcePosition();
+
+                file->set_sourceFileUsesBinaryFileExtension(true);
+
+                // If this is an object file being processed for binary analysis then mark it as an object
+                // file so that we can trigger analysis to mar the sections that will be disassembled.
+                string binaryFileName = file->get_sourceFileNameWithPath();
+                if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
+                {
+                  file->set_isObjectFile(true);
+                }
+
+                // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
+                // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
+                file->set_binary_only(true);
+
+                // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
+                file->set_requires_C_preprocessor(false);
+
+                ROSE_ASSERT(file->get_file_info() != NULL);
+
+                if (isLibraryArchive == true)
+                {
+                  #ifdef _MSC_VER
+                    /* The following block of code deals with *.a library archives files found on
+                     * Unix systems. I added better temporary file and directory names, but this
+                     * block of code also has commands that likely won't run on Windows
+                     * systems, so I'm commenting out the whole block. [RPM 2010-11-03] */
+                    ROSE_ASSERT(!"Windows not supported");
+                  #else
+
+                  // This is the case of processing a library archive (*.a) file. We want to process these files so that
+                  // we can test the library identification mechanism to build databases of the binary functions in
+                  // libraries (so that we detect these in staticaly linked binaries).
+                  ROSE_ASSERT(isBinaryExecutable == false);
+
+                  // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and
+                  // the SgBinaryComposite will contain a list of SgAsmGenericFile objects to hold them all.
+                  string archiveName = file->get_sourceFileNameWithPath();
+
+                  printf ("archiveName = %s \n",archiveName.c_str());
+
+                  // Mark this as a library archive.
+                  file->set_isLibraryArchive(true);
+
+                  // Extract the archive into a temporary directory and create a file in that
+                  // directory that will have the names of objects stored in the archive.  We have
+                  // to be careful about name choices since this function could be called multiple
+                  // times from one process, and by multiple processes.
+                  static int tmpDirectorySequence = 0;
+                  string tmpDirectory = "/tmp/ROSE-" + StringUtility::numberToString(getpid()) +
+                      "-" + StringUtility::numberToString(tmpDirectorySequence++);
+                  string objectNameFile = tmpDirectory + "/object_names.txt";
+                  string commandLine = "mkdir -p " + tmpDirectory +
+                      "&& cd " + tmpDirectory +
+                      "&& ar -vox " + archiveName +
+                      ">" + objectNameFile;
+                  printf ("Running System Command: %s \n",commandLine.c_str());
+
+                  // Run the system command...
+                  system(commandLine.c_str());
+
+                  vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
+                  vector<string> objectFileList;
+
+                  for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
                   {
-                 // file = new SgSourceFile ( argv,  project );
-                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                    file = sourceFile;
-
-                    file->set_sourceFileUsesPHPFileExtension(true);
-
-                    file->set_outputLanguage(SgFile::e_PHP_output_language);
-
-                    file->set_PHP_only(true);
-
-                 // DQ (12/23/2008): We don't handle CPP directives and comments for PHP yet.
-                 // file->get_skip_commentsAndDirectives(true);
-
-                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                 // Note that file->get_requires_C_preprocessor() should be false.
-                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                    sourceFile->initializeGlobalScope();
-                  }
-                 else
-                  {
-                 // printf ("Calling file->set_sourceFileUsesFortranFileExtension(false) \n");
-
-                 // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
-                    if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
-                       {
-                      // file = new SgSourceFile ( argv,  project );
-                         SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                         file = sourceFile;
-
-                      // This is a C++ file (so define __cplusplus, just like GNU gcc would)
-                      // file->set_requires_cplusplus_macro(true);
-                         file->set_sourceFileUsesCppFileExtension(true);
-
-                      // Use the filename suffix as a default means to set this value
-                         file->set_outputLanguage(SgFile::e_Cxx_output_language);
-
-                         file->set_Cxx_only(true);
-
-                      // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                      // Note that file->get_requires_C_preprocessor() should be false.
-                         ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                         sourceFile->initializeGlobalScope();
-                       }
-                      else
-                       {
-                      // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
-                         if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
-                              ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
-                            {
-                           // file = new SgSourceFile ( argv,  project );
-                              SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                              file = sourceFile;
-
-                           // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
-                              file->set_sourceFileUsesCppFileExtension(false);
-
-                           // Use the filename suffix as a default means to set this value
-                              file->set_outputLanguage(SgFile::e_C_output_language);
-
-                              file->set_C_only(true);
-
-                           // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
-                              if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
-                                   file->set_UPC_only(true);
-
-                           // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                           // Note that file->get_requires_C_preprocessor() should be false.
-                              ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                              sourceFile->initializeGlobalScope();
-                            }
-                           else
-                            {
-                              if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension) == true )
-                                 {
-                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                                   file = sourceFile;
-                                   file->set_Cuda_only(true);
-
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
-                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                                   sourceFile->initializeGlobalScope();
-                                 }
-                                else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
-                                 {
-                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                                   file = sourceFile;
-                                   file->set_OpenCL_only(true);
-
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
-                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                                   sourceFile->initializeGlobalScope();
-                                 }
-                                else if ( CommandlineProcessing::isJavaFileNameSuffix(filenameExtension) == true )
-                                 {
-                                // DQ (10/11/2010): Adding support for Java.
-                                // file = new SgSourceFile ( argv,  project );
-                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                                   file = sourceFile;
-
-                                // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
-                                   file->set_sourceFileUsesCppFileExtension(false);
-
-                                // Note that we can use the C++ unparser to provide output that will support inspection of 
-                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
-                                // the ongoing support within the Java specific unparser.
-                                // file->set_outputLanguage(SgFile::e_C_output_language);
-                                   file->set_outputLanguage(SgFile::e_Java_output_language);
-
-                                   file->set_Java_only(true);
-
-                                // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
-                                   file->set_compileOnly(true);
-
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
-                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                                   sourceFile->initializeGlobalScope();
-
-                                // file->display("Marked as java file based on file suffix");
-                                 }
-                              else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
-                              {
-                                  // file = new SgSourceFile ( argv,  project );
-                                  SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                                  file = sourceFile;
-
-                                  file->set_sourceFileUsesPythonFileExtension(true);
-                                  file->set_outputLanguage(SgFile::e_Python_output_language);
-                                  file->set_Python_only(true);
-
-                                  // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                  // Note that file->get_requires_C_preprocessor() should be false.
-                                  ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                                  sourceFile->initializeGlobalScope();
-                              }
-                                else
-                                 {
-                                // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
-
-                                // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
-
-                                // Detect if this is a binary (executable) file!
-                                   bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-                                   bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
-
-                                // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
-                                // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
-                                   if (!isBinaryExecutable && !isLibraryArchive)
-                                       isBinaryExecutable = true;
-
-                                // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
-                                   if (isBinaryExecutable == true || isLibraryArchive == true)
-                                      {
-                                     // Build a SgBinaryComposite to represent either the binary executable or the library archive.
-                                        SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
-                                        file = binary;
-
-                                     // This should have already been setup!
-                                     // file->initializeSourcePosition();
-
-                                        file->set_sourceFileUsesBinaryFileExtension(true);
-
-                                     // If this is an object file being processed for binary analysis then mark it as an object
-                                     // file so that we can trigger analysis to mar the sections that will be disassembled.
-                                        string binaryFileName = file->get_sourceFileNameWithPath();
-                                        if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
-                                           {
-                                             file->set_isObjectFile(true);
-                                           }
-
-                                      // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
-                                      // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
-                                      file->set_binary_only(true);
-
-                                      // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
-                                      file->set_requires_C_preprocessor(false);
-
-                                      ROSE_ASSERT(file->get_file_info() != NULL);
-
-                                      if (isLibraryArchive == true)
-                                      {
-#ifdef _MSC_VER
-                                          /* The following block of code deals with *.a library archives files found on
-                                           * Unix systems. I added better temporary file and directory names, but this
-                                           * block of code also has commands that likely won't run on Windows
-                                           * systems, so I'm commenting out the whole block. [RPM 2010-11-03] */
-                                          ROSE_ASSERT(!"Windows not supported");
-#else
-
-                                          // This is the case of processing a library archive (*.a) file. We want to process these files so that
-                                          // we can test the library identification mechanism to build databases of the binary functions in
-                                          // libraries (so that we detect these in staticaly linked binaries).
-                                          ROSE_ASSERT(isBinaryExecutable == false);
-
-                                          // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and
-                                          // the SgBinaryComposite will contain a list of SgAsmGenericFile objects to hold them all.
-                                          string archiveName = file->get_sourceFileNameWithPath();
-
-                                          printf ("archiveName = %s \n",archiveName.c_str());
-
-                                          // Mark this as a library archive.
-                                          file->set_isLibraryArchive(true);
-
-                                          // Extract the archive into a temporary directory and create a file in that
-                                          // directory that will have the names of objects stored in the archive.  We have
-                                          // to be careful about name choices since this function could be called multiple
-                                          // times from one process, and by multiple processes.
-                                          static int tmpDirectorySequence = 0;
-                                          string tmpDirectory = "/tmp/ROSE-" + StringUtility::numberToString(getpid()) +
-                                              "-" + StringUtility::numberToString(tmpDirectorySequence++);
-                                          string objectNameFile = tmpDirectory + "/object_names.txt";
-                                          string commandLine = "mkdir -p " + tmpDirectory +
-                                              "&& cd " + tmpDirectory +
-                                              "&& ar -vox " + archiveName +
-                                              ">" + objectNameFile;
-                                          printf ("Running System Command: %s \n",commandLine.c_str());
-
-                                          // Run the system command...
-                                          system(commandLine.c_str());
-
-                                          vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
-                                          vector<string> objectFileList;
-
-                                          for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
-                                          {
-                                              // Get each word in the file of names (*.o)
-                                              string word = *i;
-                                              // printf ("word = %s \n",word.c_str());
-                                              size_t wordSize = word.length();
-                                              string targetSuffix = ".o";
-                                              size_t targetSuffixSize = targetSuffix.length();
-                                              if (wordSize > targetSuffixSize &&
-                                                      word.substr(wordSize-targetSuffixSize) == targetSuffix)
-                                                  objectFileList.push_back(tmpDirectory + "/" + word);
-                                          }
-
-                                          for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
-                                          {
-                                              // Get each object file name (*.o)
-                                              string objectFileName = *i;
-                                              printf ("objectFileName = %s \n",objectFileName.c_str());
-                                              binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-                                              printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
-                                          }
-#if 0
-                                          printf ("Exiting in processing a library archive file. \n");
-                                          // ROSE_ASSERT(false);
-#endif
-#endif /* _MSC_VER */
-                                      }
-#if 0
-                                      printf ("Processed as a binary file! \n");
-#endif
-                                  }
-                                  else
-                                  {
-                                      file = new SgUnknownFile ( argv,  project );
-
-                                      // This should have already been setup!
-                                      // file->initializeSourcePosition();
-
-                                      ROSE_ASSERT(file->get_parent() != NULL);
-                                      ROSE_ASSERT(file->get_parent() == project);
-
-                                      // If all else fails, then output the type of file and exit.
-                                      file->set_sourceFileTypeIsUnknown(true);
-                                      file->set_requires_C_preprocessor(false);
-
-                                      ROSE_ASSERT(file->get_file_info() != NULL);
-                                      // file->set_parent(project);
-
-                                      // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
-                                      // outputTypeOfFileAndExit(sourceFilename);
-                                      printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
-                                      outputTypeOfFileAndExit(sourceFilename);
-                                  }
-                              }
-                            }
-                       }
+                    // Get each word in the file of names (*.o)
+                    string word = *i;
+                    // printf ("word = %s \n",word.c_str());
+                    size_t wordSize = word.length();
+                    string targetSuffix = ".o";
+                    size_t targetSuffixSize = targetSuffix.length();
+                    if (wordSize > targetSuffixSize &&
+                        word.substr(wordSize-targetSuffixSize) == targetSuffix)
+                      objectFileList.push_back(tmpDirectory + "/" + word);
                   }
 
-                 file->set_sourceFileUsesFortranFileExtension(false);
-             }
+                  for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
+                  {
+                    // Get each object file name (*.o)
+                    string objectFileName = *i;
+                    printf ("objectFileName = %s \n",objectFileName.c_str());
+                    binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
+                    printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
+                  }
+                  #if 0
+                    printf ("Exiting in processing a library archive file. \n");
+                    // ROSE_ASSERT(false);
+                  #endif
+                #endif /* _MSC_VER */
+              }
+              #if 0
+                printf ("Processed as a binary file! \n");
+              #endif
+            }
+            else
+            {
+              file = new SgUnknownFile ( argv,  project );
+
+              // This should have already been setup!
+              // file->initializeSourcePosition();
+
+              ROSE_ASSERT(file->get_parent() != NULL);
+              ROSE_ASSERT(file->get_parent() == project);
+
+              // If all else fails, then output the type of file and exit.
+              file->set_sourceFileTypeIsUnknown(true);
+              file->set_requires_C_preprocessor(false);
+
+              ROSE_ASSERT(file->get_file_info() != NULL);
+              // file->set_parent(project);
+
+              // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
+              // outputTypeOfFileAndExit(sourceFilename);
+              printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
+              outputTypeOfFileAndExit(sourceFilename);
+            }
+          }
         }
-       else
-        {
-       // DQ (2/6/2009): This case is used by the build function SageBuilder::buildFile().
+      }
+    }
 
-#if 1
-       // DQ (12/22/2008): Make any error message from this branch more clear for debugging!
-       // AS Is this option possible?
-          printf ("Is this branch reachable? \n");
-          ROSE_ASSERT(false);
-       // abort();
+    file->set_sourceFileUsesFortranFileExtension(false);
+    }
+  }
+  else
+  {
+    // DQ (2/6/2009): This case is used by the build function SageBuilder::buildFile().
 
-       // ROSE_ASSERT (p_numberOfSourceFileNames == 0);
-          ROSE_ASSERT (file->get_sourceFileNameWithPath().empty() == true);
+    #if 1
+      // DQ (12/22/2008): Make any error message from this branch more clear for debugging!
+      // AS Is this option possible?
+      printf ("Is this branch reachable? \n");
+      ROSE_ASSERT(false);
+      // abort();
 
-       // If no source code file name was found then likely this is:
-       //   1) a link command, or
-       //   2) called as part of the SageBuilder::buildFile()
-       // using the C++ compiler.  In this case skip the EDG processing.
-          file->set_disable_edg_backend(true);
-#endif
-       // printf ("No source file found on command line, assuming to be linker command line \n");
-        }
+      // ROSE_ASSERT (p_numberOfSourceFileNames == 0);
+      ROSE_ASSERT (file->get_sourceFileNameWithPath().empty() == true);
+
+      // If no source code file name was found then likely this is:
+      //   1) a link command, or
+      //   2) called as part of the SageBuilder::buildFile()
+      // using the C++ compiler.  In this case skip the EDG processing.
+      file->set_disable_edg_backend(true);
+    #endif
+    // printf ("No source file found on command line, assuming to be linker command line \n");
+  }
 
   // DQ (2/6/2009): Can use this assertion with the build function SageBuilder::buildFile().
   // DQ (2/3/2009): I think this is a new assertion!
@@ -1215,30 +1219,30 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
   // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
   // it was placed here.
   // if ( isSgUnknownFile(file) == NULL && file != NULL  )
-     if ( file != NULL && isSgUnknownFile(file) == NULL )
-        {
-       // printf ("Calling file->callFrontEnd() \n");
-          nextErrorCode = file->callFrontEnd();
-       // printf ("DONE: Calling file->callFrontEnd() \n");
-          ROSE_ASSERT ( nextErrorCode <= 3);
-        }
+  if ( file != NULL && isSgUnknownFile(file) == NULL )
+  {
+    // printf ("Calling file->callFrontEnd() \n");
+    nextErrorCode = file->callFrontEnd();
+    // printf ("DONE: Calling file->callFrontEnd() \n");
+    ROSE_ASSERT ( nextErrorCode <= 3);
+  }
 
   // Keep the filename stored in the Sg_File_Info consistant.  Later we will want to remove this redundency
   // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
   // the integer values instead of string comparisions.  Required for the handling co CPP directives and comments.
 
-#if 0
+  #if 0
      if (file != NULL)
         {
           printf ("Calling file->display() \n");
           file->display("SgFile* determineFileType()");
         }
-#endif
+  #endif
 
   // printf ("Leaving determineFileType() \n");
 
-     return file;
-   }
+  return file;
+}
 
 // DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the
 // current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
@@ -4017,7 +4021,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // Allow conditional skipping of the final compile step for testing ROSE.
   // printf ("SgFile::compileOutput(): get_skipfinalCompileStep() = %s \n",get_skipfinalCompileStep() ? "true" : "false");
      if (get_skipfinalCompileStep() == false)
-        {
+    {
        // Debugging code
           if ( get_verbose() > 1 )
              {
@@ -4057,7 +4061,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
           }
           returnValueForCompiler = systemFromVector (compilerCmdLine);
-        }
+    }
        else
         {
           if ( get_verbose() > 1 )

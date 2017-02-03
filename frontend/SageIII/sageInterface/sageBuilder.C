@@ -24,6 +24,7 @@
 
 using namespace std;
 using namespace SageInterface;
+#define DBG_MAQAO printf("Function : %s, line: %d\n",__FUNCTION__,__LINE__);
 //---------------------------------------------
 // scope stack interfaces
 //   hide actual implementation of the stack
@@ -5917,6 +5918,7 @@ PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::s
 //! #define xxx yyy 
 PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNode* target,const std::string & content,PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
   {
+  DBG_MAQAO
     ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
     // simple input verification
     std::string content2 = content;  
