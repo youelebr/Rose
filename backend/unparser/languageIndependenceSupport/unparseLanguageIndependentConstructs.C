@@ -39,46 +39,46 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
 void
 UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocatedNode *node) const
 {
-#if USE_RICE_FORTRAN_WRAPPING
+  #if USE_RICE_FORTRAN_WRAPPING
     if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
     {
-        // determine line wrapping parameters -- 'pos' variables are one-based
-        bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
-        bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
-        int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
-                          : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
-                          : unp->cur.get_linewrap() );
+      // determine line wrapping parameters -- 'pos' variables are one-based
+      bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
+      bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
+      int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                        : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
+                        : unp->cur.get_linewrap() );
 
-        // check whether line wrapping is needed
-        int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
-        int free_cols = usable_cols - used_cols;
-        if( str.size() > free_cols )
+      // check whether line wrapping is needed
+      int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
+      int free_cols = usable_cols - used_cols;
+      if( str.size() > free_cols )
+      {
+        if( is_fixed_format )
         {
-            if( is_fixed_format )
-            {
-                // only noncomment lines need wrapping
-                if( ! (used_cols == 0 && str[0] != ' ' ) )
-                {
-                    // warn if successful wrapping is impossible
-                    if( 6 + str.size() > usable_cols )
-                        printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
+          // only noncomment lines need wrapping
+          if( ! (used_cols == 0 && str[0] != ' ' ) )
+          {
+            // warn if successful wrapping is impossible
+            if( 6 + str.size() > usable_cols )
+              printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
 
-                    // emit fixed-format line continuation
-// 
-unp->cur.insert_newline(1);
-                    unp->u_sage->curprint("     &");
-                }
-            }
-            else if( is_free_format )
-            {
-                // warn if successful wrapping is impossible
-                if( str.size() > usable_cols )
-                    printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
+            // emit fixed-format line continuation
+            // 
+            unp->cur.insert_newline(1);
+            unp->u_sage->curprint("     &");
+          }
+        }
+        else if( is_free_format )
+        {
+          // warn if successful wrapping is impossible
+          if( str.size() > usable_cols )
+            printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
 
-                // emit free-format line continuation even if result will still be too long
-                unp->u_sage->curprint("&");
-// 
-unp->cur.insert_newline(1);
+          // emit free-format line continuation even if result will still be too long
+          unp->u_sage->curprint("&");
+          // 
+          unp->cur.insert_newline(1);
                 unp->u_sage->curprint("&");
             }
             else
@@ -88,26 +88,26 @@ unp->cur.insert_newline(1);
 
     unp->u_sage->curprint(str);
      
-#else  // ! USE_RICE_FORTRAN_WRAPPING
-     // FMZ (3/22/2010) added fortran continue line support
-     bool is_fortran90 =  (unp->currentFile != NULL ) &&
-                              (unp->currentFile->get_F90_only() ||
-                                  unp->currentFile->get_CoArrayFortran_only());
+  #else  // ! USE_RICE_FORTRAN_WRAPPING
+    // FMZ (3/22/2010) added fortran continue line support
+    bool is_fortran90 =  (unp->currentFile != NULL ) &&
+                          (unp->currentFile->get_F90_only() ||
+                          unp->currentFile->get_CoArrayFortran_only());
 
-     int str_len       = str.size();
-     int curr_line_len = unp->cur.current_col();
+    int str_len       = str.size();
+    int curr_line_len = unp->cur.current_col();
 
-     if (is_fortran90 && 
-              curr_line_len!=0 && 
-               (str_len + curr_line_len)> MAX_F90_LINE_LEN) {
-          unp->u_sage->curprint("&");
-// 
-unp->cur.insert_newline(1);
-     } 
+    if (is_fortran90 && 
+        curr_line_len!=0 && 
+        (str_len + curr_line_len)> MAX_F90_LINE_LEN) {
+      unp->u_sage->curprint("&");
+      // 
+      unp->cur.insert_newline(1);
+    } 
 
-     unp->u_sage->curprint(str);
+    unp->u_sage->curprint(str);
      
-#endif  // USE_RICE_FORTRAN_WRAPPING
+  #endif  // USE_RICE_FORTRAN_WRAPPING
 }
 
 // DQ (8/13/2007): This has been moved to the base class (language independent code)
@@ -417,25 +417,25 @@ UnparseLanguageIndependentConstructs::unparseLineDirectives ( SgStatement* stmt 
 //-----------------------------------------------------------------------------------
 void
 UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnparse_Info & info)
-   {
-     ROSE_ASSERT(stmt != NULL);
+{
+  ROSE_ASSERT(stmt != NULL);
 
   // curprint("/* Top of statement */ \n ");
 
-#if 0
-     int line    = stmt->get_startOfConstruct()->get_raw_line();
-     string file = stmt->get_startOfConstruct()->get_filenameString();
-     printf ("Unparse (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
-#endif
+  #if 0
+    int line    = stmt->get_startOfConstruct()->get_raw_line();
+    string file = stmt->get_startOfConstruct()->get_filenameString();
+    printf ("Unparse (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
+  #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("Unparse statement (%p): %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
+  #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+    printf ("Unparse statement (%p): %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
 
-  // DQ (4/17/2007): Added enforcement for endOfConstruct().
-     ROSE_ASSERT (stmt->get_endOfConstruct() != NULL);
+    // DQ (4/17/2007): Added enforcement for endOfConstruct().
+    ROSE_ASSERT (stmt->get_endOfConstruct() != NULL);
 
-#endif
-#if 0
+  #endif
+  #if 0
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt) 
          + "): class_name() = " + stmt->class_name() 
                 + " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
@@ -444,20 +444,20 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      char buffer[100];
      snprintf (buffer,100,"%p",stmt);
      curprint ( string("\n/* Top of unparseStatement " ) + stmt->class_name() + " at: " + buffer + " */ \n");
-#endif
+  #endif
 
-#if 0
-  // DQ (10/25/2006): Debugging support for file info data for each IR node
+  #if 0
+    // DQ (10/25/2006): Debugging support for file info data for each IR node
      if (stmt->get_endOfConstruct() == NULL)
         {
           printf ("Error in unparseStatement(): stmt = %p = %s stmt->get_endOfConstruct() == NULL \n",stmt,stmt->class_name().c_str());
           stmt->get_file_info()->display("unparseStatement (debug)");
         }
-  // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
+    // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
 
      curprint ( string("\n/* Top of unparseStatement (UnparseLanguageIndependentConstructs)" ) + string(stmt->sage_class_name()) + " */\n ");
      ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
-  // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
+    // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
      int numberOfComments = -1;
      if (stmt->getAttachedPreprocessingInfo() != NULL)
         numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
@@ -481,7 +481,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           curprint ( string("/* endOfConstruct == NULL */\n " ) );
         }
      
-  // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
+    // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
 
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
      if (variableDeclaration != NULL)
@@ -497,67 +497,67 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                i++;
              }
         }
-#endif
+  #endif
 
   // Debugging support
-      if (ROSE_DEBUG > 3)
-        {
-          cout << "In unparseStatement(): getLineNumber(stmt) = "
-               << stmt->get_file_info()->displayString("unparseStatement")
-               << " unp->cur_index = " << unp->cur_index << endl;
-        }
+  if (ROSE_DEBUG > 3)
+  {
+    cout << "In unparseStatement(): getLineNumber(stmt) = "
+          << stmt->get_file_info()->displayString("unparseStatement")
+          << " unp->cur_index = " << unp->cur_index << endl;
+  }
 
-#if 0
-  // Debugging support
-     printOutComments (stmt);
-#endif
+  #if 0
+    // Debugging support
+    printOutComments (stmt);
+  #endif
 
-     if (stmt->get_file_info() == NULL)
-        {
-          printf ("Error: stmt->get_file_info() == NULL stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-        }
-     ROSE_ASSERT(stmt->get_file_info() != NULL);
+  if (stmt->get_file_info() == NULL)
+  {
+    printf ("Error: stmt->get_file_info() == NULL stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+  }
+  ROSE_ASSERT(stmt->get_file_info() != NULL);
 
-#if 1 // FIXME cause conflict in "make check"?
-  // DQ (5/19/2011): Allow unparsing of even compiler generated statements when specified via the SgUnparse_Info object.
-  // FMZ : we have ".rmod" file which will not satisfy this condition
-  // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
-  // if (!statementFromFile(stmt, getFileName()))
-     if (!statementFromFile(stmt, getFileName(), info))
-        {
-#if 0
-          printf ("WARNING: Skipping calls to output statements that are not recorded as being in the targer file \n");
-#endif
-          return;
-        }
-#endif
+  #if 1 // FIXME cause conflict in "make check"?
+    // DQ (5/19/2011): Allow unparsing of even compiler generated statements when specified via the SgUnparse_Info object.
+    // FMZ : we have ".rmod" file which will not satisfy this condition
+    // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
+    // if (!statementFromFile(stmt, getFileName()))
+    if (!statementFromFile(stmt, getFileName(), info))
+    {
+      #if 0
+        printf ("WARNING: Skipping calls to output statements that are not recorded as being in the targer file \n");
+      #endif
+      return;
+    }
+  #endif
 
   // saveCompilerGeneratedStatements(stmt,info);
   // DQ (5/27/2005): fixup ordering of comments and any compiler generated code
-     if ( info.outputCompilerGeneratedStatements() == false && 
-          stmt->get_file_info()->isCompilerGenerated() == true && 
-          isSgGlobal(stmt->get_parent()) != NULL )
-        {
-       // push all compiler generated nodes onto the static stack and unparse them after comments and directives 
-       // of the next statement are output but before the associated statement to which they are attached.
+  if ( info.outputCompilerGeneratedStatements() == false && 
+    stmt->get_file_info()->isCompilerGenerated() == true && 
+    isSgGlobal(stmt->get_parent()) != NULL )
+  {
+    // push all compiler generated nodes onto the static stack and unparse them after comments and directives 
+    // of the next statement are output but before the associated statement to which they are attached.
 
-       // printf ("Save the compiler-generated statement (%s), putting it onto the queue \n",stmt->sage_class_name());
-          unp->compilerGeneratedStatementQueue.push_front(stmt);
+    // printf ("Save the compiler-generated statement (%s), putting it onto the queue \n",stmt->sage_class_name());
+    unp->compilerGeneratedStatementQueue.push_front(stmt);
 
-       // This return prevents this code from being trivially separated out into function.
-          return;
-        }
+    // This return prevents this code from being trivially separated out into function.
+    return;
+  }
 
 
-     if( unparseLineReplacement(stmt,info) )
-       return;
+  if( unparseLineReplacement(stmt,info) )
+    return;
 
   // Markus Kowarschik: This is the new code to unparse directives before the current statement
-     //AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing
-     //of subtree.
-     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+  //AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing
+  //of subtree.
+  unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
 
-     outputCompilerGeneratedStatements(info);
+  outputCompilerGeneratedStatements(info);
 
   // DQ (5/27/2005): fixup ordering of comments and any compiler generated code
   // ROSE_ASSERT(line_to_unparse == 0);
@@ -567,15 +567,15 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // ROSE_ASSERT(unp->ltu == 0);
 
   // DQ (10/25/2006): Debugging support for file info data for each IR node
-#define OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS 0
-#if OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS
-     vector< pair<bool,std::string> > stateVector;
-     if (get_embedColorCodesInGeneratedCode() > 0)
-        {
-          setupColorCodes ( stateVector );
-          printColorCodes ( stmt, true, stateVector );
-        }
-#endif
+  #define OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS 0
+  #if OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS
+    vector< pair<bool,std::string> > stateVector;
+    if (get_embedColorCodesInGeneratedCode() > 0)
+    {
+      setupColorCodes ( stateVector );
+      printColorCodes ( stmt, true, stateVector );
+    }
+  #endif
 
   // DQ (12/26/2007): Moved from language independent handling to C/C++ specific handling 
   // becasue we don't want it to appear in the Fortran code generation.
@@ -587,197 +587,200 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // This is the added code to support the copy based unparsing mechanism.
   // Since there is a return here, it might be that comments after the 
   // statement will not be unparsed properly (check this at some point).
-     if (unp->repl != NULL)
-        {
-       // printf ("Unparser Delegate found! \n");
-          if (unp->repl->unparse_statement(stmt,info, unp->cur))
-             {
-            // printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
-               return;
-             }
-        }
+  if (unp->repl != NULL)
+  {
+    // printf ("Unparser Delegate found! \n");
+    if (unp->repl->unparse_statement(stmt,info, unp->cur))
+    {
+      // printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
+      return;
+    }
+  }
 
   // DQ (5/22/2007): Added to support name qualification and access to the new hidden 
   // type, declaration and class elaboration lists stored in the scopes.
-     SgScopeStatement* scopeStatement = isSgScopeStatement(stmt);
-     SgScopeStatement* savedScope = NULL;
-     if (scopeStatement != NULL)
-        {
-       // DQ (11/3/2007): Save the original scope so that we can restore it at the end (since we don't use a new SgUnparse_Info object).
-          savedScope = info.get_current_scope();
-#if 0
+  SgScopeStatement* scopeStatement = isSgScopeStatement(stmt);
+  SgScopeStatement* savedScope = NULL;
+  if (scopeStatement != NULL)
+  {
+    // DQ (11/3/2007): Save the original scope so that we can restore it at the end (since we don't use a new SgUnparse_Info object).
+    savedScope = info.get_current_scope();
+    #if 0
           printf ("Setting the current_scope in info: scopeStatement = %p = %s = %s \n",
                scopeStatement,scopeStatement->class_name().c_str(),SageInterface::get_name(scopeStatement).c_str());
 
           if (savedScope != NULL)
                printf ("Setting the savedScope = %p = %s = %s \n",
                     savedScope,savedScope->class_name().c_str(),SageInterface::get_name(savedScope).c_str());
-#endif
-          info.set_current_scope(NULL);
-          info.set_current_scope(scopeStatement);
-        }
-       else
-        {
-       // In this case we are only saving the scope to do error checking
-          savedScope = info.get_current_scope();
-        }
+    #endif
+    info.set_current_scope(NULL);
+    info.set_current_scope(scopeStatement);
+  }
+  else
+  {
+    // In this case we are only saving the scope to do error checking
+    savedScope = info.get_current_scope();
+  }
      
 
   // DQ (5/27/2007): Commented out, uncomment when we are ready for Robert's new hidden list mechanism.
-     if (info.get_current_scope() == NULL)
-        {
-          printf ("In unparseStatement(): info.get_current_scope() == NULL (likely called from SgNode::unparseToString()) stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-          stmt->get_startOfConstruct()->display("In unparseStatement(): info.get_current_scope() == NULL: debug");
-          ROSE_ASSERT(false);
-        }
+  if (info.get_current_scope() == NULL)
+  {
+    printf ("In unparseStatement(): info.get_current_scope() == NULL (likely called from SgNode::unparseToString()) stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+    stmt->get_startOfConstruct()->display("In unparseStatement(): info.get_current_scope() == NULL: debug");
+    ROSE_ASSERT(false);
+  }
   // ROSE_ASSERT(info.get_current_scope() != NULL);
 
   // DQ (7/20/2008): This mechanism is now extended to SgStatement and revised to handle 
   // more cases than just replacement of the 
   // AST subtree with a string.  Now we can add arbitrary text into different locations
   // relative to the specific IR node.  For now we are supporting before, replace, and after.
-     AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(stmt->getAttribute(AstUnparseAttribute::markerName));
-     if (unparseAttribute != NULL)
-        {
-       // Note that in most cases unparseLanguageSpecificStatement() will be called, some formatting 
-       // via "unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);" may be done.  This can cause extra 
-       // CRs to be inserted (which only looks bad).  Not clear now to best clean this up.
-          string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
-          curprint (code);
-        }
+  AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(stmt->getAttribute(AstUnparseAttribute::markerName));
+  if (unparseAttribute != NULL)
+  {
+    // Note that in most cases unparseLanguageSpecificStatement() will be called, some formatting 
+    // via "unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);" may be done.  This can cause extra 
+    // CRs to be inserted (which only looks bad).  Not clear now to best clean this up.
+    string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
+    curprint (code);
+    unp->cur.insert_newline(1);
+  }
 
   // Only replace the unparsing of the IR node with a string if a string is marked as AstUnparseAttribute::e_replace.
-     if (unparseAttribute != NULL && unparseAttribute->replacementStringExists() == true)
-        {
-          string code = unparseAttribute->toString(AstUnparseAttribute::e_replace);
-          curprint (code);
-        }
-       else
-        {
-       // DQ (12/4/2007): Added to ROSE (was removed at some point).
-          unparseLineDirectives(stmt);
+  if (unparseAttribute != NULL && unparseAttribute->replacementStringExists() == true)
+  {
+    string code = unparseAttribute->toString(AstUnparseAttribute::e_replace);
+    curprint (code);
+    unp->cur.insert_newline(1);
+  }
+  else
+  {
+    // DQ (12/4/2007): Added to ROSE (was removed at some point).
+    unparseLineDirectives(stmt);
 
-       // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric lable, different from SgLabelStatement)
-          unparseStatementNumbers(stmt,info);
+    // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric lable, different from SgLabelStatement)
+    unparseStatementNumbers(stmt,info);
 
-          switch (stmt->variantT())
-             {
-               case V_SgGlobal:            unparseGlobalStmt   (stmt, info); break;
-               case V_SgFunctionTypeTable: unparseFuncTblStmt  (stmt, info); break;
-               case V_SgNullStatement:     unparseNullStatement(stmt, info); break;
+    switch (stmt->variantT())
+    {
+      case V_SgGlobal:            unparseGlobalStmt   (stmt, info); break;
+      case V_SgFunctionTypeTable: unparseFuncTblStmt  (stmt, info); break;
+      case V_SgNullStatement:     unparseNullStatement(stmt, info); break;
 
-            // DQ (11/29/2008): Added support for unparsing CPP directives now supported as IR nodes.
-               case V_SgIncludeDirectiveStatement: unparseIncludeDirectiveStatement (stmt, info); break;
-               case V_SgDefineDirectiveStatement:  unparseDefineDirectiveStatement  (stmt, info); break;
-               case V_SgUndefDirectiveStatement:   unparseUndefDirectiveStatement  (stmt, info); break;
-               case V_SgIfdefDirectiveStatement:   unparseIfdefDirectiveStatement  (stmt, info); break;
-               case V_SgIfndefDirectiveStatement:  unparseIfndefDirectiveStatement  (stmt, info); break;
-               case V_SgDeadIfDirectiveStatement:  unparseDeadIfDirectiveStatement  (stmt, info); break;
-               case V_SgIfDirectiveStatement:      unparseIfDirectiveStatement  (stmt, info); break;
-               case V_SgElseDirectiveStatement:    unparseElseDirectiveStatement  (stmt, info); break;
-               case V_SgElseifDirectiveStatement:  unparseElseifDirectiveStatement  (stmt, info); break;
-               case V_SgEndifDirectiveStatement:   unparseEndifDirectiveStatement  (stmt, info); break;
-               case V_SgLineDirectiveStatement:    unparseLineDirectiveStatement  (stmt, info); break;
-               case V_SgWarningDirectiveStatement: unparseWarningDirectiveStatement  (stmt, info); break;
-               case V_SgErrorDirectiveStatement:   unparseErrorDirectiveStatement  (stmt, info); break;
-               case V_SgEmptyDirectiveStatement:   unparseEmptyDirectiveStatement  (stmt, info); break;
-               case V_SgIdentDirectiveStatement:   unparseIdentDirectiveStatement  (stmt, info); break;
-               case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement  (stmt, info); break;
-               case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
-            // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
-               case V_SgOmpAtomicStatement:
-               case V_SgOmpSectionStatement:
-               case V_SgOmpTaskwaitStatement:
-               case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
-               case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
-               case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
-               // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
-               case V_SgOmpCriticalStatement:
-               case V_SgOmpMasterStatement:
-               case V_SgOmpOrderedStatement:
-               case V_SgOmpSectionsStatement:
-               case V_SgOmpParallelStatement:
-               case V_SgOmpWorkshareStatement:
-               case V_SgOmpSingleStatement:
-               case V_SgOmpTaskStatement:  unparseOmpGenericStatement (stmt, info); break;
-               default:
-                 // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
-                 // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
-                 // unparseLanguageSpecificStatement(stmt,info);
-                 // unp->repl->unparseLanguageSpecificStatement(stmt,info);
-                    unparseLanguageSpecificStatement(stmt,info);
-                    break;
-             }
+      // DQ (11/29/2008): Added support for unparsing CPP directives now supported as IR nodes.
+      case V_SgIncludeDirectiveStatement: unparseIncludeDirectiveStatement (stmt, info); break;
+      case V_SgDefineDirectiveStatement:  unparseDefineDirectiveStatement  (stmt, info); break;
+      case V_SgUndefDirectiveStatement:   unparseUndefDirectiveStatement  (stmt, info); break;
+      case V_SgIfdefDirectiveStatement:   unparseIfdefDirectiveStatement  (stmt, info); break;
+      case V_SgIfndefDirectiveStatement:  unparseIfndefDirectiveStatement  (stmt, info); break;
+      case V_SgDeadIfDirectiveStatement:  unparseDeadIfDirectiveStatement  (stmt, info); break;
+      case V_SgIfDirectiveStatement:      unparseIfDirectiveStatement  (stmt, info); break;
+      case V_SgElseDirectiveStatement:    unparseElseDirectiveStatement  (stmt, info); break;
+      case V_SgElseifDirectiveStatement:  unparseElseifDirectiveStatement  (stmt, info); break;
+      case V_SgEndifDirectiveStatement:   unparseEndifDirectiveStatement  (stmt, info); break;
+      case V_SgLineDirectiveStatement:    unparseLineDirectiveStatement  (stmt, info); break;
+      case V_SgWarningDirectiveStatement: unparseWarningDirectiveStatement  (stmt, info); break;
+      case V_SgErrorDirectiveStatement:   unparseErrorDirectiveStatement  (stmt, info); break;
+      case V_SgEmptyDirectiveStatement:   unparseEmptyDirectiveStatement  (stmt, info); break;
+      case V_SgIdentDirectiveStatement:   unparseIdentDirectiveStatement  (stmt, info); break;
+      case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement  (stmt, info); break;
+      case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
+      // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
+      case V_SgOmpAtomicStatement:
+      case V_SgOmpSectionStatement:
+      case V_SgOmpTaskwaitStatement:
+      case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
+      case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
+      case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
+      // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
+      case V_SgOmpCriticalStatement:
+      case V_SgOmpMasterStatement:
+      case V_SgOmpOrderedStatement:
+      case V_SgOmpSectionsStatement:
+      case V_SgOmpParallelStatement:
+      case V_SgOmpWorkshareStatement:
+      case V_SgOmpSingleStatement:
+      case V_SgOmpTaskStatement:  unparseOmpGenericStatement (stmt, info); break;
+      default:
+        // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
+        // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
+        // unparseLanguageSpecificStatement(stmt,info);
+        // unp->repl->unparseLanguageSpecificStatement(stmt,info);
+        unparseLanguageSpecificStatement(stmt,info);
+        break;
+    }
 
-       // DQ (5/8/2010): Reset the source code position in the AST.
-          if (unp->get_resetSourcePosition() == true)
-             {
-               unp->resetSourcePosition(stmt);
-             }
-        }
+    // DQ (5/8/2010): Reset the source code position in the AST.
+    if (unp->get_resetSourcePosition() == true)
+    {
+      unp->resetSourcePosition(stmt);
+    }
+  }
 
   // DQ (11/3/2007): Save the original scope so that we can restore it at the end (since we don't use a new SgUnparse_Info object).
-     if (scopeStatement != NULL)
-        {
-       // DQ (12/5/2007): This assertion appears to work better.
-          ROSE_ASSERT(savedScope != NULL || isSgGlobal(scopeStatement) != NULL);
+  if (scopeStatement != NULL)
+  {
+    // DQ (12/5/2007): This assertion appears to work better.
+    ROSE_ASSERT(savedScope != NULL || isSgGlobal(scopeStatement) != NULL);
 
-#if 0
+    #if 0
           printf ("At end of scope: Setting the current_scope in info: scopeStatement = %p = %s = %s \n",
                scopeStatement,scopeStatement->class_name().c_str(),SageInterface::get_name(scopeStatement).c_str());
 
           if (savedScope != NULL)
                printf ("At end of scope: Resetting using the savedScope = %p = %s = %s \n",
                     savedScope,savedScope->class_name().c_str(),SageInterface::get_name(savedScope).c_str());
-#endif
-          info.set_current_scope(NULL);
-          info.set_current_scope(savedScope);
-        }
+    #endif
+    info.set_current_scope(NULL);
+    info.set_current_scope(savedScope);
+  }
 
   // DQ (12/5/2007): Check if the call to unparse any construct changes the scope stored in info.
   // This does error checking on ALL statements!
-     SgScopeStatement* scopeAfterUnparseStatement = info.get_current_scope();
-     if (savedScope != scopeAfterUnparseStatement)
-        {
-          printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
-          ROSE_ASSERT(false);
-        }
+  SgScopeStatement* scopeAfterUnparseStatement = info.get_current_scope();
+  if (savedScope != scopeAfterUnparseStatement)
+  {
+    printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
+    ROSE_ASSERT(false);
+  }
 
-#if OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS
-     if (get_embedColorCodesInGeneratedCode() > 0)
-        {
-          printColorCodes ( stmt, false, stateVector );
-        }
-#endif
+  #if OUTPUT_EMBEDDED_COLOR_CODES_FOR_STATEMENTS
+       if (get_embedColorCodesInGeneratedCode() > 0)
+          {
+            printColorCodes ( stmt, false, stateVector );
+          }
+  #endif
 
   // DQ (7/20/2008): Part of new support for unparsing arbitrary strings into the unparsed code.
-     if (unparseAttribute != NULL)
-        {
-          string code = unparseAttribute->toString(AstUnparseAttribute::e_after);
-          curprint (code);
-        }
+  if (unparseAttribute != NULL)
+  {
+    string code = unparseAttribute->toString(AstUnparseAttribute::e_after);
+    curprint (code);
+    unp->cur.insert_newline(1);
+  }
 
   // DQ (comments) This is where new lines are output after the statement.
-     unp->cur.format(stmt, info, FORMAT_AFTER_STMT);
+  unp->cur.format(stmt, info, FORMAT_AFTER_STMT);
 
   // Markus Kowarschik: This is the new code to unparse directives after the current statement
-     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+  unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
 
   // DQ (5/31/2005): special handling for compiler generated statements
-     if (isSgGlobal(stmt) != NULL)
-        {
-       // printf ("Output template definitions after the final comments in the file \n");
-          outputCompilerGeneratedStatements(info);
-        }
+  if (isSgGlobal(stmt) != NULL)
+  {
+    // printf ("Output template definitions after the final comments in the file \n");
+    outputCompilerGeneratedStatements(info);
+  }
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("Leaving unparse statement (%p): sage_class_name() = %s name = %s \n",stmt,stmt->sage_class_name(),SageInterface::get_name(stmt).c_str());
-  // printf ("Leaving unparse statement (%p): sage_class_name() = %s \n",stmt,stmt->sage_class_name());
-  // curprint ( string("\n/* Bottom of unparseStatement: sage_class_name() = " + stmt->sage_class_name() + " */ \n";
-     curprint ( string("\n/* Bottom of unparseStatement (" ) + StringUtility::numberToString(stmt) 
+  #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+    printf ("Leaving unparse statement (%p): sage_class_name() = %s name = %s \n",stmt,stmt->sage_class_name(),SageInterface::get_name(stmt).c_str());
+    // printf ("Leaving unparse statement (%p): sage_class_name() = %s \n",stmt,stmt->sage_class_name());
+    // curprint ( string("\n/* Bottom of unparseStatement: sage_class_name() = " + stmt->sage_class_name() + " */ \n";
+    curprint ( string("\n/* Bottom of unparseStatement (" ) + StringUtility::numberToString(stmt) 
          + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-#endif
-   }
+  #endif
+}
 
 
 //-----------------------------------------------------------------------------------
@@ -968,6 +971,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
   {
     string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
     curprint (code);
+    unp->cur.insert_newline(1);
   }
         
   // Only replace the unparsing of the IR node with a string if a string is marked as AstUnparseAttribute::e_replace.
@@ -1083,6 +1087,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
   {
     string code = unparseAttribute->toString(AstUnparseAttribute::e_after);
     curprint (code);
+    unp->cur.insert_newline(1);
   }
 
   // DQ (7/19/2008): This is the new code to unparse directives before the current expression

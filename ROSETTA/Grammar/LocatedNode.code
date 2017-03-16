@@ -849,7 +849,7 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
 
      ROSE_ASSERT(prepInfoPtr != NULL);
 
-#if 1
+#if 0
      printf ("Current node is a %s: prepInfoPtr->stringPointer = %s \n",class_name().c_str(),prepInfoPtr->getString());
 #endif
 
@@ -890,13 +890,13 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
 
           case PreprocessingInfo::before:
 					std::cout << "Current node is a " <<  class_name().c_str() << ": prepInfoPtr->stringPointer = " << prepInfoPtr->getString() << "comment will be attached before stmt\n";
-std::cout << unparseToString() << std::endl;
+// std::cout << unparseToString() << std::endl;
                p_attachedPreprocessingInfoPtr->insert(p_attachedPreprocessingInfoPtr->begin(),prepInfoPtr);
                break;
 
           case PreprocessingInfo::after:
-					std::cout << "Current node is a " <<  class_name().c_str() << ": prepInfoPtr->stringPointer = " << prepInfoPtr->getString() << "comment will be attached after stmt\n";
-std::cout << unparseToString() << std::endl;
+//					std::cout << "Current node is a " <<  class_name().c_str() << ": prepInfoPtr->stringPointer = " << prepInfoPtr->getString() << "comment will be attached after stmt\n";
+//std::cout << unparseToString() << std::endl;
             // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
                p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
                break;

@@ -32,6 +32,7 @@ AstUnparseAttribute::toString()
         {
           s += i->first;
         }
+        s += "\n";
 
      return s;
    }
@@ -45,7 +46,7 @@ AstUnparseAttribute::toString( RelativePositionType inputlocation )
           if (i->second == inputlocation)
                s += i->first;
         }
-
+        s += "\n";
      return s;
    }
 

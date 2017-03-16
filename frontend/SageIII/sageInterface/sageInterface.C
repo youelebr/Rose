@@ -5816,7 +5816,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
 void
 SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const vector<int> & indexList, SgStatement* targetStatement , bool surroundingStatementPreceedsTargetStatement)
 {
-  DBG_MAQAO
+  // DBG_MAQAO
      AttachedPreprocessingInfoType* comments = sourceStatement->getAttachedPreprocessingInfo();
 
 #if REMOVE_STATEMENT_DEBUG
@@ -8488,7 +8488,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   // insert  SageInterface::insertStatement()
 void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore, bool autoMovePreprocessingInfo /*= true */)
 {
-  DBG_MAQAO
+  // DBG_MAQAO
   ROSE_ASSERT(targetStmt &&newStmt);
   ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
   SgNode* parent = targetStmt->get_parent();
@@ -9553,7 +9553,7 @@ PreprocessingInfo* SageInterface::attachComment(
            PreprocessingInfo::RelativePositionType  position /*=PreprocessingInfo::before*/,
            PreprocessingInfo::DirectiveType dtype /* PreprocessingInfo::CpreprocessorUnknownDeclaration */)
 {
-  DBG_MAQAO
+  // DBG_MAQAO
   ROSE_ASSERT(target); //dangling comment is not allowed
 
   PreprocessingInfo* result = NULL;
@@ -9598,8 +9598,8 @@ PreprocessingInfo* SageInterface::attachComment(
   {
     case PreprocessingInfo::C_StyleComment:        comment = "/* " + content + " */"; break;
     case PreprocessingInfo::CplusplusStyleComment: comment = "// " + content;         break;
-    case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;  /*DBG_MAQAO*/  break;
-    case PreprocessingInfo::F90StyleComment:   comment = "!" + content; /*DBG_MAQAO*/   break;
+    case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
+    case PreprocessingInfo::F90StyleComment:   comment = "!" + content;               break;
     case PreprocessingInfo::CpreprocessorLineDeclaration:
       //comment = "#myline " + content;
       comment = "#pragma " + content;
@@ -9631,7 +9631,7 @@ PreprocessingInfo* SageInterface::attachComment(
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
 {
-  DBG_MAQAO
+  // DBG_MAQAO
     bool successful = false;
     if (scope == NULL)
         scope = SageBuilder::topScopeStack();
@@ -9690,7 +9690,7 @@ PreprocessingInfo* SageInterface::attachArbitraryText(SgLocatedNode* target,
                 const std::string & text,
                PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/)
 {
-  DBG_MAQAO
+  // DBG_MAQAO
     ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
     PreprocessingInfo* result = NULL;
     PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
@@ -9786,7 +9786,7 @@ StringUtility::numberToString(++breakLabelCounter),
 void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
                             PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
 {
-  DBG_MAQAO
+  // DBG_MAQAO
   ROSE_ASSERT(stmt_src != NULL);
   ROSE_ASSERT(stmt_dst != NULL);
   AttachedPreprocessingInfoType* infoList=stmt_src->getAttachedPreprocessingInfo();
@@ -11995,7 +11995,7 @@ SgCommaOpExp * SageInterface::insertAfterUsingCommaOp (SgExpression* new_exp, Sg
 void
 SageInterface::addMessageStatement( SgStatement* stmt, string message )
    {
-  DBG_MAQAO
+  // DBG_MAQAO
   // Put out a message in the separate file to lable the dependent CPP directives.
   // --- PreprocessingInfo(DirectiveType, const std::string & inputString, const std::string & filenameString, int line_no, int col_no, int nol, RelativePositionType relPos );
   // SgSourceFile* separateSourceFile = TransformationSupport::getSourceFile(scope);
@@ -12011,7 +12011,7 @@ SageInterface::addMessageStatement( SgStatement* stmt, string message )
 void
 SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* decl, SgGlobal* scope, SgStatement* original_statement, bool excludeHeaderFiles)
    {
-  DBG_MAQAO
+  // DBG_MAQAO
   // New function to support outlining of functions into separate files (with their required declarations).
 
 #if 0
