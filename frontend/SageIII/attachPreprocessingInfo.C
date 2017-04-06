@@ -97,15 +97,14 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr, std::map<std::string,ROSEAttr
 void
 attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
 {
-  // DBG_MAQAO
   #ifndef  CXX_IS_ROSE_CODE_GENERATION
 
-// CH (4/7/2010): Wave issue fixed.
-//#ifndef _MSCx_VER
-//#pragma message ("WARNING: Wave support not ported to Windows MSVC.")
-//         printf ("ERROR: Wave support not ported to Windows MSVC. \n");
-//         ROSE_ASSERT(false);
-//#else
+  // CH (4/7/2010): Wave issue fixed.
+  //#ifndef _MSCx_VER
+  //#pragma message ("WARNING: Wave support not ported to Windows MSVC.")
+  //         printf ("ERROR: Wave support not ported to Windows MSVC. \n");
+  //         ROSE_ASSERT(false);
+  //#else
      ROSE_ASSERT(sageFilePtr != NULL);
      std::string sourceFileName = sageFilePtr->getFileName();
 
@@ -134,8 +133,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      std::vector<std::string> macroList;
      std::vector<std::string> preincludeList;
 
-#if 0
-// .mine
+  #if 0
+  // .mine
      string predefinedMacros          = CXX_SPEC_DEF;
     
      if (SgProject::get_verbose() >= 1)
@@ -145,11 +144,11 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
   // or SgProject IR nodes so it is not required to reparse the commandline here.
 
      vector<string> predefinedMacroList = CommandlineProcessing::generateArgListFromString(predefinedMacros);
-#else
+  #else
   // DQ (12/22/2008): I expect that this is the better version...
      const char* predefinedMacroListRaw[] = CXX_SPEC_DEF;
      vector<string> predefinedMacroList(predefinedMacroListRaw, predefinedMacroListRaw + sizeof(predefinedMacroListRaw) / sizeof(*predefinedMacroListRaw));
-#endif
+  #endif
   // for (vector<string>::iterator i = predefinedMacroList.begin(); i != predefinedMacroList.end(); i++)
      vector<string>::iterator i = predefinedMacroList.begin();
      while (i != predefinedMacroList.end()) {
@@ -300,7 +299,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      }
 
      ctx.set_language(boost::wave::enable_long_long(ctx.get_language()));
-//     ctx.set_language(boost::wave::enable_preserve_comments(ctx.get_language()));
+  //     ctx.set_language(boost::wave::enable_preserve_comments(ctx.get_language()));
      ctx.set_language(boost::wave::enable_variadics(ctx.get_language()));
   // Force a specific file to be included before all others
 
@@ -408,12 +407,12 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           if (SgProject::get_verbose() >= 1)
                printf ("Adding preinclude file = %s \n",i->c_str());
 
-// DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
-#ifndef USE_ROSE
+  // DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
+  #ifndef USE_ROSE
        // DQ (4/7/2006): This currently fails
           first.force_include( i->c_str(), copyOf_i == preincludeList.rend() );
        // first.force_include( i->c_str(), false);
-#endif
+  #endif
 
           if (SgProject::get_verbose() >= 1)
                printf ("DONE: Adding preinclude file = %s \n",i->c_str());
@@ -424,19 +423,19 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
                 // Start Lexing
      try{ 
-// DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
-#ifndef USE_ROSE
+  // DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
+  #ifndef USE_ROSE
           while (first != last)
-#else
+  #else
           while (true)
-#endif
+  #endif
              {
                using namespace boost::wave;
 
                try{
-// DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
-// Each reference to "first" appears to generate an error. It appears that this test fails to compile using ROSE.
-#ifndef USE_ROSE
+  // DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
+  // Each reference to "first" appears to generate an error. It appears that this test fails to compile using ROSE.
+  #ifndef USE_ROSE
                     current_position = (*first).get_position();
 
                     if (first->get_position().get_file()!="<built-in>")
@@ -455,7 +454,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
                     wave_tokenStream.push_back(*first);
                     first++;
-#endif
+  #endif
                        }
 
                     catch (boost::wave::cpp_exception &e)
@@ -507,7 +506,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
      attributeListMap.attach_line_to_macro_call();
 
-#if 1
+  #if 1
         // King84 (2010.09.23): We capture the raw token stream because the tokens that aren't pre-processed tokens don't show up in the individual file's list of tokens.  Also, #line directives get obeyed and mapped into different files.  If we want to reproduce the original file failthfully, we have to use the raw list.  I leave the rest here for future reference, since it took some figuring out to get right.
      if (SgProject::get_verbose() >= 1)
              std::cout << "File " << sourceFileName << " has " << ctx.get_hooks().tokens.size() << " tokens." << std::endl;
@@ -515,8 +514,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
          {
                 sageFilePtr->get_rawTokenStream().push_back(*i);
          }
-#else
-//     sageFilePtr->get_rawTokenStream().clear();
+  #else
+    //     sageFilePtr->get_rawTokenStream().clear();
      assert(attributeListMap.currentMapOfAttributes.find(sourceFileName) != attributeListMap.currentMapOfAttributes.end());
          for (std::vector<PreprocessingInfo*>::iterator i = attributeListMap.currentMapOfAttributes[sourceFileName]->getList().begin(); i != attributeListMap.currentMapOfAttributes[sourceFileName]->getList().end(); ++i)
          {
@@ -526,22 +525,22 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
                         sageFilePtr->get_rawTokenStream().push_back( holder );
         }
          }
-#endif
+  #endif
 
-#if 0
-  // Get all SgFile nodes in the AST so that the attributes can be attached to them
-  // std::vector<SgNode*> sgFileList =     NodeQuery::querySubTree(project,&findNodes);
-     std::vector<SgNode*> sgFileList =     NodeQuery::querySubTree(sageFilePtr,&findNodes);
+  #if 0
+    // Get all SgFile nodes in the AST so that the attributes can be attached to them
+    // std::vector<SgNode*> sgFileList =     NodeQuery::querySubTree(project,&findNodes);
+       std::vector<SgNode*> sgFileList =     NodeQuery::querySubTree(sageFilePtr,&findNodes);
 
-  // Attache the map of attributes belonging to the current file to the AST
+    // Attache the map of attributes belonging to the current file to the AST
      for(std::vector<SgNode*>::iterator it = sgFileList.begin(); it != sgFileList.end(); ++it)
         {
           SgFile* sgFile = isSgFile(*it);
           attachPreprocessingInfo(sgFile,&attributeListMap.currentMapOfAttributes);
         }
-#else
-   // AS(01/04/07) Create a global map of filenames to PreprocessingInfo*'s as it is inefficient
-   // to get this by a traversal of the AST
+  #else
+    // AS(01/04/07) Create a global map of filenames to PreprocessingInfo*'s as it is inefficient
+    // to get this by a traversal of the AST
      for(AttributeListMap::attribute_map_type::iterator it_files = attributeListMap.currentMapOfAttributes.begin(); it_files != attributeListMap.currentMapOfAttributes.end(); ++it_files)
         {
           std::string filename2 = it_files->first;
@@ -563,19 +562,19 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
           if (SgProject::get_verbose() >= 1)
             std::cout << "source file name:" << sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2) << std::endl;
-//          std::vector<PreprocessingInfo*>* preproc_info = new std::vector<PreprocessingInfo*>();
+    //          std::vector<PreprocessingInfo*>* preproc_info = new std::vector<PreprocessingInfo*>();
     //      attributeMapForAllFiles[sourceFileNameId] = attrList;
 
-#if 1
+  #if 1
           for (std::vector<PreprocessingInfo*>::iterator it_preproc = attrList->getList().begin(); it_preproc != attrList->getList().end(); ++it_preproc)
              {
                //preproc_info->push_back(*it_preproc);
-//               returnListOfAttributes->addElement(**it_preproc);
+                // returnListOfAttributes->addElement(**it_preproc);
                ROSE_ASSERT(*it_preproc != NULL);
                if( SgProject::get_verbose() >= 1 )
                  std::cerr << "Added Macro " << (*it_preproc)->getString() << std::endl;
              }
-#endif
+  #endif
 
           if (SgProject::get_verbose() >= 1)
              {
@@ -587,19 +586,19 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      if (SgProject::get_verbose() >= 1)
           std::cout << "Size of mapFilenameToAttributes:" << mapFilenameToAttributes.size() << std::endl;
 
-#endif
+  #endif
 
-// endif for ifdef _MSCx_VER
-//#endif
+  // endif for ifdef _MSCx_VER
+  //#endif
 
-// endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
-#endif
+  // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+  #endif
 
-#if 0
+  #if 0
      printf ("Ending at base of attachPreprocessingInfoUsingWave(SgSourceFile*) \n");
      ROSE_ABORT();
-#endif
-   }
+  #endif
+}
 
 
 // DQ (4/5/2006): Older version not using Wave preprocessor
@@ -608,7 +607,6 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 void
 attachPreprocessingInfo(SgSourceFile *sageFilePtr) {
   ROSE_ASSERT(sageFilePtr != NULL);
-  //DBG_MAQAO
   #if 0
     printf ("Inside of attachPreprocessingInfo(): wave = %s file = %p = %s \n",
         sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
@@ -627,7 +625,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr) {
     // printf ("sageFilePtr->get_collectAllCommentsAndDirectives() = %s \n",sageFilePtr->get_collectAllCommentsAndDirectives() ? "true" : "false");
 
     bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
-
+    
     AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
 
     // When using Wave get all the preprocessing dirctives for all the files.

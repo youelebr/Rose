@@ -171,7 +171,6 @@ void
 AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
    ( SgLocatedNode* locatedNode, int lineNumber, PreprocessingInfo::RelativePositionType location, bool reset_start_index, ROSEAttributesList *currentListOfAttributes)
 {
-  // DBG_MAQAO
   // DQ (11/23/2008): Added comment.
   // This is the main function called to insert all PreprocessingInfo objects into IR nodes.  This function currently 
   // adds the PreprocessingInfo objects as attributes, but will be modified to insert the CPP directive specific
@@ -526,7 +525,6 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
 ROSEAttributesList* 
 AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, std::string fileNameForDirectivesAndComments )
 {
-  //DBG_MAQAO
   // This function abstracts the collection of comments and CPP directives into a list.  
   // The list is then used to draw from as the AST is traversed and the list elements 
   // are woven into the AST.
@@ -598,7 +596,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
       // if (currentFilePtr->get_fixedFormat() == true)
 
       if (sourceFile->get_inputFormat() == SgFile::e_fixed_form_output_format) {
-          if ( SgProject::get_verbose() > 1 ) {
+          if ( SgProject::get_verbose() > 1) {
             printf ("Fortran code assumed to be in fixed format form (skipping translation of tokens) \n");
           }
 
@@ -615,6 +613,12 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
       // Attach the token stream to the AST
       returnListOfAttributes->set_rawTokenStream(lex_token_stream);
+      ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
+
+      returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran77_language);
+      returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran9x_language);
+
+
       #if 1
         // DQ (11/23/2008): This is the new support to collect CPP directives and comments from Fortran applications.
         // printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());

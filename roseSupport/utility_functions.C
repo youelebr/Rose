@@ -188,6 +188,7 @@ frontendShell (int argc, char** argv) {
 
 SgProject*
 frontendShell (const std::vector<std::string>& argv) {
+  DBG_MAQAO
   // Convert this to a list of strings to simplify editing (adding new option)
      Rose_STL_Container<string> commandLineList = argv;
      printf ("frontendShell (top): argv = \n%s \n",StringUtility::listToString(commandLineList).c_str());

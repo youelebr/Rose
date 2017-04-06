@@ -889,10 +889,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
       if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
       {
         printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
+        printf("May possible that all kind of statements were not handle yet ...And the output extension will be .f03\n");
+        #if 0 
+        // DBG_MAQAO // Usually put to 1
         ROSE_ASSERT(false);
-
+        #endif
         // This is not yet supported.
         // file->set_sourceFileUsesFortran2008FileExtension(true);
+        file->set_sourceFileUsesFortran2003FileExtension(true);
 
         // Use the filename suffix as a default means to set this value
         file->set_outputFormat(SgFile::e_free_form_output_format);
@@ -1264,117 +1268,116 @@ extern void jserver_init();
 //! internal function to invoke the EDG frontend and generate the AST
 int
 SgProject::parse(const vector<string>& argv)
-   {
+{
   // Not sure that if we are just linking that we should call a function called "parse()"!!!
 
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
+  TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-#if 0
+  #if 0
      printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
-#endif
+  #endif
 
   // builds file list (or none if this is a link line)
-     processCommandLine(argv);
+  processCommandLine(argv);
 
-     int errorCode = 0;
+  int errorCode = 0;
 
   // DQ (7/7/2005): Added support for AST Merge Mechanism
-     if (p_astMerge == true)
-        {
-       // If astMerge is specified, then the command file is accessed to execute all
-       // the commands from each of the associated working directories.  Each new AST
-       // in merged with the previous AST.
+  if (p_astMerge == true)
+  {
+    // If astMerge is specified, then the command file is accessed to execute all
+    // the commands from each of the associated working directories.  Each new AST
+    // in merged with the previous AST.
 
-          if (p_astMergeCommandFile != "")
-             {
-            // If using astMerge mechanism we have to save the command line and
-            // working directories to a separate file.  This permits a makefile to
-            // call a ROSE translator repeatedly and the command line for each
-            // file be saved.
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-               errorCode = AstMergeSupport(this);
-#endif
-             }
-            else
-             {
-            // DQ (5/26/2007): This case could make sense, if there were more than
-            // one file on the command line (or if we wanted to force a single file
-            // to share as much as possible in a merge with itself, there is a
-            // typical 20% reduction in memory useage for this case since the
-            // types are then better shared than is possible during initial construction
-            // of the AST).
-#if 0
-            // error case
+    if (p_astMergeCommandFile != "")
+    {
+      // If using astMerge mechanism we have to save the command line and
+      // working directories to a separate file.  This permits a makefile to
+      // call a ROSE translator repeatedly and the command line for each
+      // file be saved.
+      #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+        errorCode = AstMergeSupport(this);
+      #endif
+    }
+    else
+    {
+      // DQ (5/26/2007): This case could make sense, if there were more than
+      // one file on the command line (or if we wanted to force a single file
+      // to share as much as possible in a merge with itself, there is a
+      // typical 20% reduction in memory useage for this case since the
+      // types are then better shared than is possible during initial construction
+      // of the AST).
+      #if 0
+        // error case
                printf ("astMerge requires specification of a command file \n");
                ROSE_ASSERT(false);
                errorCode = -1;
-#endif
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-               errorCode = AstMergeSupport(this);
-#endif
-             }
+      #endif
+      #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+        errorCode = AstMergeSupport(this);
+      #endif
+    }
+  }
+  else
+  {
+    // DQ (7/7/2005): Specification of the AST merge command filename triggers accumulation
+    // of working directories and commandlines into the specified file (no other processing
+    // is done, the AST (beyond the SgProject) is not built).
+    if (p_astMergeCommandFile != "")
+    {
+      // If using astMerge mechanism we have to save the command line and
+      // working directories to a separate file.
+
+      // DQ (5/26/2007): This might be a problem where object files are required to be built
+      // and so we might have to call the backend compiler as a way of forcing the correct
+      // object files to be built so that, for example, libraries can be constructed when
+      // operating across multiple directories.
+
+      #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+        errorCode = buildAstMergeCommandFile(this);
+      #endif
+    }
+    else
+    {
+      // Normal case without AST Merge: Compiling ...
+      // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %zu \n",get_sourceFileNameList().size());
+      if (get_sourceFileNameList().size() > 0)
+      {
+        // This is a compile line
+        // printf ("Calling parse() from SgProject::parse(const vector<string>& argv) \n");
+
+        /*
+         * FMZ (5/19/2008)
+         *   "jserver_init()"   does nothing. The Java VM will be loaded at the first time
+         *                      it needed (i.e for parsing the 1st fortran file).
+         *   "jserver_finish()" will dostroy the Java VM if it is running.
+         */
+
+          if (SgProject::get_verbose() > 1)
+          {
+            printf ("Calling Open Fortran Parser: jserver_init() \n");
+          }
+
+          // DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the
+          // current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
+          // So use the explicit macros defined in rose_config header file for this level of control.
+          #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
+            // #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
+            // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+            // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+                      jserver_init();
+            // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+          #endif
+          errorCode = parse();
+
+          // FMZ deleteComm jserver_finish();
         }
-       else
-        {
-       // DQ (7/7/2005): Specification of the AST merge command filename triggers accumulation
-       // of working directories and commandlines into the specified file (no other processing
-       // is done, the AST (beyond the SgProject) is not built).
-          if (p_astMergeCommandFile != "")
-             {
-            // If using astMerge mechanism we have to save the command line and
-            // working directories to a separate file.
 
-            // DQ (5/26/2007): This might be a problem where object files are required to be built
-            // and so we might have to call the backend compiler as a way of forcing the correct
-            // object files to be built so that, for example, libraries can be constructed when
-            // operating across multiple directories.
-
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-               errorCode = buildAstMergeCommandFile(this);
-#endif
-             }
-            else
-             {
-            // Normal case without AST Merge: Compiling ...
-            // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %zu \n",get_sourceFileNameList().size());
-               if (get_sourceFileNameList().size() > 0)
-                  {
-                 // This is a compile line
-                 // printf ("Calling parse() from SgProject::parse(const vector<string>& argv) \n");
-
-
-                  /*
-                   * FMZ (5/19/2008)
-                   *   "jserver_init()"   does nothing. The Java VM will be loaded at the first time
-                   *                      it needed (i.e for parsing the 1st fortran file).
-                   *   "jserver_finish()" will dostroy the Java VM if it is running.
-                   */
-
-                    if (SgProject::get_verbose() > 1)
-                       {
-                         printf ("Calling Open Fortran Parser: jserver_init() \n");
-                       }
-
-// DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the
-// current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
-// So use the explicit macros defined in rose_config header file for this level of control.
-#if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
-// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
-// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-                    jserver_init();
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#endif
-                    errorCode = parse();
-
-                 // FMZ deleteComm jserver_finish();
-                  }
-
-            // DQ (5/26/2007): This is meaningless, so remove it!
-            // errorCode = errorCode;
-             }
-        }
+        // DQ (5/26/2007): This is meaningless, so remove it!
+        // errorCode = errorCode;
+      }
+    }
 
 #if 1
   // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
@@ -2270,93 +2273,97 @@ SgFile::secondaryPassOverSourceFile() {
     p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
     ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
 
-#if 0
-       // This is empty so there is nothing to display!
-          p_preprocessorDirectivesAndCommentsList->display("Seconadary Source File Processing at bottom of SgFile::callFrontEnd()");
-#endif
+    #if 0
+      // This is empty so there is nothing to display!
+      p_preprocessorDirectivesAndCommentsList->display("Seconadary Source File Processing at bottom of SgFile::callFrontEnd()");
+    #endif
 
-       // DQ (4/19/2006): since they can take a while and includes substantial
-       // file I/O we make this optional (selected from the command line).
-       // bool collectAllCommentsAndDirectives = get_collectAllCommentsAndDirectives();
+    // DQ (4/19/2006): since they can take a while and includes substantial
+    // file I/O we make this optional (selected from the command line).
+    // bool collectAllCommentsAndDirectives = get_collectAllCommentsAndDirectives();
 
-       // DQ (12/17/2008): The merging of CPP directives and comments from either the
-       // source file or including all the include files is not implemented as a single
-       // traversal and has been rewritten.
+    // DQ (12/17/2008): The merging of CPP directives and comments from either the
+    // source file or including all the include files is not implemented as a single
+    // traversal and has been rewritten.
 
-        if (get_skip_commentsAndDirectives() == false) {
-          if (get_verbose() > 1)  {
-            printf ("In SgFile::secondaryPassOverSourceFile(): calling attachAllPreprocessingInfo() \n");
-          }
+    if (get_skip_commentsAndDirectives() == false) {
+      if (get_verbose() > 1)  {
+        printf ("In SgFile::secondaryPassOverSourceFile(): calling attachAllPreprocessingInfo() \n");
+      }
 
-          // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
-          // SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
-          SgSourceFile* sourceFile = isSgSourceFile(this);
-          ROSE_ASSERT(sourceFile != NULL);
+      // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
+      // SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
+      SgSourceFile* sourceFile = isSgSourceFile(this);
+      ROSE_ASSERT(sourceFile != NULL);
 
-          // Save the state of the requirement fo CPP processing (fortran only)
-          bool requiresCPP = false;
-          if (get_Fortran_only() == true) {
-                    requiresCPP = get_requires_C_preprocessor();
-                    if (requiresCPP == true) {
-                        set_requires_C_preprocessor(false);
-                    }
-                  }   
-#if 1
-            // Debugging code (eliminate use of CPP directives from source file so that we
-            // can debug the insertion of linemarkers from first phase of CPP processing.
-            // printf ("In SgFile::secondaryPassOverSourceFile(): requiresCPP = %s \n",requiresCPP ? "true" : "false");
-               if (requiresCPP == false) {
-                  attachPreprocessingInfo(sourceFile);
-                  // printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
-                  // ROSE_ASSERT(false);
-                }
-#else
-            // Normal path calling attachPreprocessingInfo()
-               attachPreprocessingInfo(sourceFile);
-#endif
-
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-            // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
-               processOpenMP(sourceFile);
-#endif
-
-            // Reset the saved state (might not really be required at this point).
-               if (requiresCPP == true) {
-                  set_requires_C_preprocessor(false);
-               }
-
-#if 0
-               printf ("In SgFile::callFrontEnd(): exiting after attachPreprocessingInfo() \n");
-               ROSE_ASSERT(false);
-#endif
-               if (get_verbose() > 1)
-                  {
-                    printf ("In SgFile::callFrontEnd(): Done with attachAllPreprocessingInfo() \n");
-                  }
-             } //end if get_skip_commentsAndDirectives() is false
+      // Save the state of the requirement fo CPP processing (fortran only)
+      bool requiresCPP = false;
+      if (get_Fortran_only() == true) {
+        requiresCPP = get_requires_C_preprocessor();
+        if (requiresCPP == true) {
+          set_requires_C_preprocessor(false);
         }
-
-#if 0
-     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
-     display("At bottom of SgFile::callFrontEnd()");
-#endif
-
-#if 1
-  // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
-  // so we need to make sure that it is set.
-     SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
-  // ROSE_ASSERT(functionTypeTable != NULL);
-     if (functionTypeTable != NULL && functionTypeTable->get_parent() == NULL)
-        {
-       // printf ("In SgFile::callFrontEnd(): set the parent of SgFunctionTypeTable \n");
-          functionTypeTable->set_parent(this);
+      }   
+      #if 1
+        // Debugging code (eliminate use of CPP directives from source file so that we
+        // can debug the insertion of linemarkers from first phase of CPP processing.
+        // printf ("In SgFile::secondaryPassOverSourceFile(): requiresCPP = %s \n",requiresCPP ? "true" : "false");
+        if (requiresCPP == false) {
+          attachPreprocessingInfo(sourceFile);
+          // printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
+          // ROSE_ASSERT(false);
         }
-  // ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
-#endif
+      #else
+        // Normal path calling attachPreprocessingInfo()
+        attachPreprocessingInfo(sourceFile);
+      #endif
+
+      #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+        // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
+        processOpenMP(sourceFile);
+      #endif
+
+      // Reset the saved state (might not really be required at this point).
+      if (requiresCPP == true) {
+        set_requires_C_preprocessor(false);
+      }
+
+      #if 0
+        printf ("In SgFile::callFrontEnd(): exiting after attachPreprocessingInfo() \n");
+        ROSE_ASSERT(false);
+      #endif
+      if (get_verbose() > 1)
+      {
+        printf ("In SgFile::callFrontEnd(): Done with attachAllPreprocessingInfo() \n");
+      }
+    } //end if get_skip_commentsAndDirectives() is false
+    else {
+      if (get_verbose() > 1)
+        printf("User decide to ingore Comments and Directives.\n" );
+    }
+  }
+
+  #if 0
+       printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
+       display("At bottom of SgFile::callFrontEnd()");
+  #endif
+
+  #if 1
+    // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
+    // so we need to make sure that it is set.
+    SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
+    // ROSE_ASSERT(functionTypeTable != NULL);
+    if (functionTypeTable != NULL && functionTypeTable->get_parent() == NULL)
+    {
+      // printf ("In SgFile::callFrontEnd(): set the parent of SgFunctionTypeTable \n");
+      functionTypeTable->set_parent(this);
+    }
+    // ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
+  #endif
 
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
-   }
+}
 
 
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.

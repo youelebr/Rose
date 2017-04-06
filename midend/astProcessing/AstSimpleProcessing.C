@@ -17,6 +17,7 @@
 //////////////////////////////////////////
 //// SIMPLE PROCESSING IMPLEMENTATION ////
 //////////////////////////////////////////
+#define DBG_MAQAO std::cerr<<"In "<<__FILE__<<" FUNCTION "<<__FUNCTION__<<" , line: "<<__LINE__<<"\n"; //DBG_MAQAO
 
 // this has to be put in a different file than the other 3 templated versions to compile&link with gcc always
 
@@ -100,6 +101,7 @@ AstSimpleProcessing::traverse(SgNode* node, t_traverseOrder treeTraversalOrder)
 void 
 AstPrePostProcessing::traverseWithinFile(SgNode* node)
 {
+    DBG_MAQAO
     static DummyAttribute da;
     SgTreeTraversal<DummyAttribute, DummyAttribute>::traverseWithinFile(node, da, preandpostorder);
 }
@@ -108,6 +110,7 @@ AstPrePostProcessing::traverseWithinFile(SgNode* node)
 void 
 AstSimpleProcessing::traverseWithinFile(SgNode* node, t_traverseOrder treeTraversalOrder)
 {
+    DBG_MAQAO
     static DummyAttribute da;
     SgTreeTraversal<DummyAttribute, DummyAttribute>::traverseWithinFile(node, da, treeTraversalOrder);
 }
