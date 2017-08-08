@@ -2063,7 +2063,15 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
     {
       // FMZ: move comma here
       curprint(", ");
-      curprint("ONLY : ");
+      bool is_fortran90 =   (unp->currentFile != NULL ) &&
+                            (unp->currentFile->get_F90_only() ||
+                            unp->currentFile->get_CoArrayFortran_only());
+      if (is_fortran90) {
+        curprint("only : ");
+      } else {
+        curprint("ONLY : ");
+      }
+
 
       // printf ("Need to output use-only name/rename list \n");
     }
@@ -5508,7 +5516,7 @@ void FortranCodeGeneration_locatedNode::curprint(const std::string & str, SgLoca
           unp->u_sage->curprint("     &");
         }
       }
-      else if( is_free_format ) {
+      else if( is_free_format  && str[0] != '!') {
         // warn if successful wrapping is impossible
         if( str.size() > usable_cols )
           printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");

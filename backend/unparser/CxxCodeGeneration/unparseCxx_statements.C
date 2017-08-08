@@ -1958,7 +1958,9 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
 
      unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
+     unp->u_sage->curprint_newline();
      curprint ( string("}"));
+     unp->u_sage->curprint_newline();
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
    }
 

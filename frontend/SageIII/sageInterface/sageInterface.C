@@ -3062,6 +3062,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
         //Added V_SgAttributeSpecificationStatement; V_SgCommonBlock; and V_SgFortranIncludeLine to handle all case (NAS problem)
         case V_SgAttributeSpecificationStatement:
         case V_SgCommonBlock:
+        case V_SgFormatStatement:
         case V_SgFortranIncludeLine: {
           SgFortranIncludeLine * includeStmt = isSgFortranIncludeLine(declaration);
           // std::cout << "SgFortranIncludeLine in rebuildSymbolTable, include the file : ";

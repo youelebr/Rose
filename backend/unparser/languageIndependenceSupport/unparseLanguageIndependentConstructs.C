@@ -69,7 +69,7 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocat
             unp->u_sage->curprint("     &");
           }
         }
-        else if( is_free_format )
+        else if( is_free_format &&  str[0] != '!')
         {
           // warn if successful wrapping is impossible
           if( str.size() > usable_cols )

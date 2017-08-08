@@ -313,161 +313,161 @@ string get_type_name(SgType* t)
 //-----------------------------------------------------------------------------------
 void
 Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
-   {
-     ROSE_ASSERT(type != NULL);
+{
+  ROSE_ASSERT(type != NULL);
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+  #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("In Unparse_Type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
              type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
      curprint ( string("\n/* Top of unparseType name ") + type->class_name().c_str()
          + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
-#endif
+  #endif
 
-#if 0
+  #if 0
      printf ("In Unparse_Type::unparseType(): type->sage_class_name() = %s \n",type->sage_class_name());
      curprint ( string("\n/* Top of unparseType: sage_class_name() = ") + type->sage_class_name() + " */ \n");
-#endif
+  #endif
 
-#if 0
+  #if 0
      char buffer[512];
      sprintf (buffer,"entering case for %s",type->class_name().c_str());
      unp->u_debug->printDebugInfo(buffer,true);
-#endif
+  #endif
 
   // DQ (6/4/2011): This controls if we output the generated name of the type (required to 
   // support name qualification of subtypes) or if we unparse the type from the AST (where 
   // name qualification of subtypes is not required).
-     bool usingGeneratedNameQualifiedTypeNameString = false;
-     string typeNameString;
+  bool usingGeneratedNameQualifiedTypeNameString = false;
+  string typeNameString;
 
-#if 1
-  // DQ (6/4/2011): Support for output of generated string for type (used where name 
-  // qualification is required for subtypes (e.g. template arguments)).
-     SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
-     if (nodeReferenceToType != NULL)
+  #if 1
+    // DQ (6/4/2011): Support for output of generated string for type (used where name 
+    // qualification is required for subtypes (e.g. template arguments)).
+    SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
+    if (nodeReferenceToType != NULL)
+    {
+      #if 0
+        printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+      #endif
+      std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
+      if (i != SgNode::get_globalTypeNameMap().end())
+      {
+        usingGeneratedNameQualifiedTypeNameString = true;
+
+        typeNameString = i->second.c_str();
+        #if 0
+          printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+        #endif
+      }
+    }
+  #endif
+
+  if (usingGeneratedNameQualifiedTypeNameString == true)
+  {
+    // Output the previously generated type name contianing the correct name qualification of subtypes (e.g. template arguments).
+    #if 0
+      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
+      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
+      printf ("In Unparse_Type::unparseType() using generated type name string: type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+      curprint ( string("\n/* Top of unparseType() using generated type name string: ") + type->sage_class_name() + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
+    #endif
+    if (info.isTypeFirstPart() == true)
+    {
+      // printf ("Ouput typeNameString = %s \n",typeNameString.c_str());
+      curprint(typeNameString);
+    }
+    else
+    {
+      // Sometimes neither is set and this is the trivial case where we want to output the generated type name (see test2011_74.C).
+      // if (isSgPointerType(type) != NULL)
+      if (info.isTypeFirstPart() == false && info.isTypeSecondPart() == false)
+      {
+        #if 0
+          printf ("Note: Handling unparsing of name qualified type as special case (typeNameString = %s) \n",typeNameString.c_str());
+        #endif
+        curprint(typeNameString);
+      }
+    }
+  }
+  else
+  {
+    // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
+    switch (type->variant())
+    {
+      case T_UNKNOWN:            curprint ( get_type_name(type) + " ");          break;
+      case T_CHAR:
+      case T_SIGNED_CHAR:
+      case T_UNSIGNED_CHAR:
+      case T_SHORT:
+      case T_SIGNED_SHORT:
+      case T_UNSIGNED_SHORT:
+      case T_INT:
+      case T_SIGNED_INT:
+      case T_UNSIGNED_INT:
+      case T_LONG:
+      case T_SIGNED_LONG:
+      case T_UNSIGNED_LONG:
+      case T_VOID:
+      case T_GLOBAL_VOID:
+      case T_WCHAR:
+      case T_FLOAT:
+      case T_DOUBLE:
+      case T_LONG_LONG:
+      case T_UNSIGNED_LONG_LONG:
+      case T_SIGNED_LONG_LONG:
+      case T_LONG_DOUBLE:
+      case T_STRING:
+      case T_BOOL:
+      case T_COMPLEX:
+      case T_IMAGINARY:
+      case T_DEFAULT:
+      case T_ELLIPSE:
+      {
+        if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
         {
-#if 0
-          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
-#endif
-          std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
-          if (i != SgNode::get_globalTypeNameMap().end())
-             {
-               usingGeneratedNameQualifiedTypeNameString = true;
-
-               typeNameString = i->second.c_str();
-#if 0
-               printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
-#endif
-             }
+          /* do nothing */
         }
-#endif
-
-     if (usingGeneratedNameQualifiedTypeNameString == true)
+        else
         {
-       // Output the previously generated type name contianing the correct name qualification of subtypes (e.g. template arguments).
-#if 0
-          string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
-          string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-          printf ("In Unparse_Type::unparseType() using generated type name string: type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
-          curprint ( string("\n/* Top of unparseType() using generated type name string: ") + type->sage_class_name() + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
-#endif
-          if (info.isTypeFirstPart() == true)
-             {
-            // printf ("Ouput typeNameString = %s \n",typeNameString.c_str());
-               curprint(typeNameString);
-             }
-            else
-             {
-            // Sometimes neither is set and this is the trivial case where we want to output the generated type name (see test2011_74.C).
-            // if (isSgPointerType(type) != NULL)
-               if (info.isTypeFirstPart() == false && info.isTypeSecondPart() == false)
-                  {
-#if 0
-                    printf ("Note: Handling unparsing of name qualified type as special case (typeNameString = %s) \n",typeNameString.c_str());
-#endif
-                    curprint(typeNameString);
-                  }
-             }
+          curprint ( get_type_name(type) + " ");
         }
-       else
-        {
-       // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
-          switch (type->variant())
-             {
-               case T_UNKNOWN:            curprint ( get_type_name(type) + " ");          break;
-               case T_CHAR:
-               case T_SIGNED_CHAR:
-               case T_UNSIGNED_CHAR:
-               case T_SHORT:
-               case T_SIGNED_SHORT:
-               case T_UNSIGNED_SHORT:
-               case T_INT:
-               case T_SIGNED_INT:
-               case T_UNSIGNED_INT:
-               case T_LONG:
-               case T_SIGNED_LONG:
-               case T_UNSIGNED_LONG:
-               case T_VOID:
-               case T_GLOBAL_VOID:
-               case T_WCHAR:
-               case T_FLOAT:
-               case T_DOUBLE:
-               case T_LONG_LONG:
-               case T_UNSIGNED_LONG_LONG:
-               case T_SIGNED_LONG_LONG:
-               case T_LONG_DOUBLE:
-               case T_STRING:
-               case T_BOOL:
-               case T_COMPLEX:
-               case T_IMAGINARY:
-               case T_DEFAULT:
-               case T_ELLIPSE:
-                  {
-                    if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
-                       {
-                      /* do nothing */
-                       }
-                      else
-                       {
-                         curprint ( get_type_name(type) + " ");
-                       }
-                    break;
-                  }
+        break;
+      }
 
-               case T_POINTER:            unparsePointerType(type, info);          break;
-               case T_MEMBER_POINTER:     unparseMemberPointerType(type, info);    break;
-               case T_REFERENCE:          unparseReferenceType(type, info);        break;
-            // case T_NAME:               unparseNameType(type, info);             break;
-               case T_CLASS:              unparseClassType(type, info);            break;
-               case T_ENUM:               unparseEnumType(type, info);             break;
-               case T_TYPEDEF:            unparseTypedefType(type, info);          break;
-               case T_MODIFIER:           unparseModifierType(type, info);         break;
-               case T_QUALIFIED_NAME:     unparseQualifiedNameType(type, info);    break;
+      case T_POINTER:            unparsePointerType(type, info);          break;
+      case T_MEMBER_POINTER:     unparseMemberPointerType(type, info);    break;
+      case T_REFERENCE:          unparseReferenceType(type, info);        break;
+      // case T_NAME:               unparseNameType(type, info);             break;
+      case T_CLASS:              unparseClassType(type, info);            break;
+      case T_ENUM:               unparseEnumType(type, info);             break;
+      case T_TYPEDEF:            unparseTypedefType(type, info);          break;
+      case T_MODIFIER:           unparseModifierType(type, info);         break;
+      case T_QUALIFIED_NAME:     unparseQualifiedNameType(type, info);    break;
 
-               case T_PARTIAL_FUNCTION:
-               case T_FUNCTION:           unparseFunctionType(type, info);         break;
+      case T_PARTIAL_FUNCTION:
+      case T_FUNCTION:           unparseFunctionType(type, info);         break;
 
-               case T_MEMBERFUNCTION:     unparseMemberFunctionType(type, info);   break;
-               case T_ARRAY:              unparseArrayType(type, info);            break;
+      case T_MEMBERFUNCTION:     unparseMemberFunctionType(type, info);   break;
+      case T_ARRAY:              unparseArrayType(type, info);            break;
 
-               default:
-                  {
-                    printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
-                    ROSE_ASSERT(false);
-                    break;
-                  }
-             }
-        }
+      default:
+      {
+        printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
+        ROSE_ASSERT(false);
+        break;
+      }
+    }
+  }
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("Leaving Unparse_Type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
+  #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+    printf ("Leaving Unparse_Type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
           type->sage_class_name(),firstPartString.c_str(),secondPartString.c_str());
-     curprint ( string("\n/* Bottom of unparseType name ") + type->sage_class_name()
+    curprint ( string("\n/* Bottom of unparseType name ") + type->sage_class_name()
          + " firstPart  " + firstPartString + " secondPart " + secondPartString + " */ \n");
-#endif
-   }
+  #endif
+}
 
 #if 1
 void
