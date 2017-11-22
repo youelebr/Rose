@@ -3060,11 +3060,14 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
           }
           break;
         }
-        //DBG_MAQAO
+        //COINCOIN DBG_MAQAO
         //Added V_SgAttributeSpecificationStatement; V_SgCommonBlock; and V_SgFortranIncludeLine to handle all case (NAS problem)
         case V_SgAttributeSpecificationStatement:
         case V_SgCommonBlock:
-        case V_SgFormatStatement:
+        case V_SgDerivedTypeStatement: //COINCOIN MAQAO
+        case V_SgContainsStatement: //COINCOIN MAQAO
+        case V_SgProcedureHeaderStatement: //COINCOIN MAQAO
+        case V_SgEquivalenceStatement: //COINCOIN MAQAO
         case V_SgFortranIncludeLine: {
           SgFortranIncludeLine * includeStmt = isSgFortranIncludeLine(declaration);
           // std::cout << "SgFortranIncludeLine in rebuildSymbolTable, include the file : ";

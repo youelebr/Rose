@@ -42,23 +42,18 @@ using namespace std;
 
 string spaceBeforeStmt(SgLocatedNode* node) {
   string str= "";
-  SgSourceFile* file = SageInterface::getEnclosingNode<SgSourceFile>(node,true);
-  // SgFile* file = SageInterface::getEnclosingFileNode (node);
-  if(file) {
-    if (!((file->get_outputFormat() == SgFile::e_fixed_form_output_format) 
-    || SageInterface::getProject()->get_F77_only())) {
-      // std::cout << "SpaceBeforeStmt : col : " << node->get_file_info()->get_col() 
-      //           << " line : " << node->get_file_info()->get_line() << " | MAQAO_line = " << MAQAO_line << std::endl;
-      // unsigned nodeLine = node->get_file_info()->get_line();
-      // while( nodeLine++ < MAQAO_line)
-      //   str += "\n";
-      if(node->get_file_info()->get_line() != node->get_parent()->get_file_info()->get_line())
-        for(int i=0; i < node->get_file_info()->get_col(); ++i) {
-          str += " ";
-        }
-      else {
+  if(node) {
+    // std::cout << "SpaceBeforeStmt : col : " << node->get_file_info()->get_col() 
+    //           << " line : " << node->get_file_info()->get_line() << " | MAQAO_line = " << MAQAO_line << std::endl;
+    // unsigned nodeLine = node->get_file_info()->get_line();
+    // while( nodeLine++ < MAQAO_line)
+    //   str += "\n";
+    if(node->get_file_info()->get_line() != node->get_parent()->get_file_info()->get_line())
+      for(int i=0; i < node->get_file_info()->get_col(); ++i) {
         str += " ";
       }
+    else {
+      str += " ";
     }
   }
   return str;
@@ -68,27 +63,18 @@ string spaceBeforeStmt(SgLocatedNode* node) {
 // less the size of the keyword 
 string spaceBeforeStmt(SgLocatedNode* node, int sizeOfKeyword) {
   string str= "";
-  SgSourceFile* file = SageInterface::getEnclosingNode<SgSourceFile>(node,true);
-  // SgFile* file = SageInterface::getEnclosingFileNode (node);
-  if(file) {
-    if (!((file->get_outputFormat() == SgFile::e_fixed_form_output_format) 
-    || SageInterface::getProject()->get_F77_only()))  {
+  if(node) {
     for(int i=0; i < node->get_file_info()->get_col() - sizeOfKeyword; ++i) {
       str += " ";
     }
-  }
   }
   return str;
 }
 
 string spaceBeforeStmt(int number_of_space) {
   string str= "";
-
-  if(! SageInterface::getProject()->get_F77_only()) {
-
-      for(int i=0; i < number_of_space; ++i) {
-        str += " ";
-      }
+  for(int i=0; i < number_of_space; ++i) {
+    str += " ";
   }
   return str;
 }

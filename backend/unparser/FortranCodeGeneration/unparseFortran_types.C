@@ -240,23 +240,13 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info, bool printA
       break;
  
     // complex type
-    case V_SgTypeComplex: {
-      SgType* baseType = isSgTypeComplex(type)->get_base_type ();      
-      if (baseType) {
-        if (isSgTypeDouble(baseType)) {
-          spaceless += 14;
-          //curprint(spaceBeforeStmt(stmt,spaceless)); 
-          curprint(spaceBeforeStmt(2));   
-          unparseBaseType(type,"DOUBLE COMPLEX",info); 
-        }
-      } else {
-        spaceless += 7;
-        //curprint(spaceBeforeStmt(stmt,spaceless)); 
-        curprint(spaceBeforeStmt(2));   
-        unparseBaseType(type,"COMPLEX",info); 
-      }
+    case V_SgTypeComplex:      
+      spaceless += 7;
+      //curprint(spaceBeforeStmt(stmt,spaceless)); 
+      curprint(spaceBeforeStmt(2));   
+      unparseBaseType(type,"COMPLEX",info); 
       break;
-    }
+
     // FMZ (2/2/2009): Add image_team for co-array team declaration
     case V_SgTypeCAFTeam:   
       spaceless += 4;

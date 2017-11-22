@@ -17,7 +17,6 @@ using namespace std;
 // Return a string wich contain as space as column before the node
 // 
 
-
 // DQ (8/13/2007): This function was implemented by Thomas
 std::string
 UnparseLanguageIndependentConstructs::resBool(bool val) const
@@ -39,59 +38,67 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
 void
 UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocatedNode *node) const
 {
+  #if USE_RICE_FORTRAN_WRAPPING
+    if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
+    {
+      // determine line wrapping parameters -- 'pos' variables are one-based
+      //bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
+      bool is_fixed_format = (unp->currentFile==NULL) ||
+          (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
+          (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
 
-  #if 1
-  #define MAX_F90_LINE_LEN_FIXED 72
-  #define MAX_F90_LINE_LEN_FREE  142
+      bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
+      int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                        : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
+                        : unp->cur.get_linewrap() );
 
-  if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() ) {
-    // determine line wrapping parameters -- 'pos' variables are one-based
-    bool is_fixed_format = (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
-    bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
-    int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
-                      : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
-                      : unp->cur.get_linewrap() );
+      // check whether line wrapping is needed
+      int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
+      int free_cols = usable_cols - used_cols;
+      if( str.size() > free_cols )
+      {
+        if( is_fixed_format )
+        {
+          // only noncomment lines need wrapping
+          if( ! (used_cols == 0 && str[0] != ' ' ) )
+          {
+            // warn if successful wrapping is impossible
+            if( 6 + str.size() > usable_cols )
+              printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
 
-    // check whether line wrapping is needed
-    int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
-    int free_cols = usable_cols - used_cols;
-
-    if( str.size() > free_cols ) {
-      if( is_fixed_format ) {
-        // only noncomment lines need wrapping
-        if( ! (used_cols == 0 && str[0] != ' ' ) ) {
-          // warn if successful wrapping is impossible
-            if ( SgProject::get_verbose() >= 1 && (str.size() > usable_cols ))  {
-              printf("[Rose] Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
-            }
-
-          // emit fixed-format line continuation
-          unp->cur.insert_newline(1);
-          unp->u_sage->curprint("     &");
+            // emit fixed-format line continuation
+            // 
+            unp->cur.insert_newline(1);
+            unp->u_sage->curprint("     &");
+          }
         }
-      }
-      else if( is_free_format ) {
-        // warn if successful wrapping is impossible
-        if( str.size() > usable_cols )
-          printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
+        else if( is_free_format && str[0] != '!')
+        {
+          // warn if successful wrapping is impossible
+          if( str.size() > usable_cols )
+            printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
 
-        // emit free-format line continuation even if result will still be too long
-        unp->u_sage->curprint("&");
-        unp->cur.insert_newline(1);
-        unp->u_sage->curprint("&");
+          // emit free-format line continuation even if result will still be too long
+          unp->u_sage->curprint("&");
+          // 
+          unp->cur.insert_newline(1);
+          unp->u_sage->curprint("&");
+        }
+        else
+          printf("Warning: long line not wrapped (unknown output format)\n");
       }
-      else
-        printf("Warning: long line not wrapped (unknown output format)\n");
     }
-  }
-  // if(node)
-  //   unp->u_sage->curprint(spaceBeforeStmt(node));
-  unp->u_sage->curprint(str);
+
+    unp->u_sage->curprint(str);
+     
   #else  // ! USE_RICE_FORTRAN_WRAPPING
     // FMZ (3/22/2010) added fortran continue line support
     bool is_fortran90 =  (unp->currentFile != NULL ) &&
                           (unp->currentFile->get_F90_only() ||
                           unp->currentFile->get_CoArrayFortran_only());
+    bool is_fixed_format = (unp->currentFile==NULL) ||
+          (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
+          (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
 
     int str_len       = str.size();
     int curr_line_len = unp->cur.current_col();
@@ -102,7 +109,17 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocat
       unp->u_sage->curprint("&");
       // 
       unp->cur.insert_newline(1);
-    } 
+    }  else if (is_fixed_format) {
+      int usable_cols = 72;
+      int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
+      int free_cols = usable_cols - used_cols;
+      if( ! (used_cols == 0 && str[0] != ' ' ) &&  free_cols < str_len) {
+        // emit fixed-format line continuation
+        unp->cur.insert_newline(1);
+        unp->u_sage->curprint("     &");
+      }
+
+    }
 
     unp->u_sage->curprint(str);
      

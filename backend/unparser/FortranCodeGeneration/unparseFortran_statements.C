@@ -408,7 +408,15 @@ void
 FortranCodeGeneration_locatedNode::unparseContainsStatement (SgStatement* stmt, SgUnparse_Info& info)
 {
   unp->cur.insert_newline(1);
-  curprint(spaceBeforeStmt(stmt));
+  unp->cur.insert_newline(1);
+    bool fixedFormat = (unp->currentFile==NULL) ||
+        (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
+        (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
+  if (fixedFormat) {
+    curprint("      ");
+  } else {
+    curprint(spaceBeforeStmt(stmt));
+  }
   curprint("CONTAINS");
   unp->cur.insert_newline(1);
 }
@@ -1285,17 +1293,14 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
   if (implicitStatement->get_implicit_none() == true)
   {
     unp->cur.insert_newline(1);
-
-    if ( (unp->currentFile==NULL) ||
-      (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
-      (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format)) 
-    {
+    bool fixedFormat = (unp->currentFile==NULL) ||
+        (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
+        (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
+    if (fixedFormat) {
       curprint("      ");
-    }
-    else {
+    } else {
       curprint(spaceBeforeStmt(stmt));
     }
-
     curprint("IMPLICIT NONE", stmt);
   }
   else
@@ -1314,6 +1319,15 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
       ROSE_ASSERT(nameList.empty() == false);
 
       unp->cur.insert_newline(1);
+      unp->cur.insert_newline(1);
+      bool fixedFormat = (unp->currentFile==NULL) ||
+          (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
+          (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
+      if (fixedFormat) {
+        curprint("      ");
+      } else {
+        curprint(spaceBeforeStmt(stmt));
+      }
       curprint("IMPLICIT ", stmt);
 
       SgInitializedNamePtrList::iterator i = nameList.begin();
@@ -2038,9 +2052,14 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
   
   SgUseStatement* useStmt = isSgUseStatement(stmt);
   ROSE_ASSERT (useStmt != NULL);
+  bool is_fortran90 =  (unp->currentFile != NULL ) &&
+                      (unp->currentFile->get_F90_only() ||
+                      unp->currentFile->get_CoArrayFortran_only());
   
   curprint(spaceBeforeStmt(stmt));
-
+  // if(is_fortran90)
+  //   curprint("use ");
+  // else
   curprint("USE ");
  
   curprint(useStmt->get_name().str());
@@ -5494,14 +5513,10 @@ FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, S
 
 // TODO: This code is identical to 'UnparseLanguageIndependentConstructs::curprint'. Factor this!
 void FortranCodeGeneration_locatedNode::curprint(const std::string & str, SgLocatedNode * node) const {
-  // #if USE_RICE_FORTRAN_WRAPPING
-  #if 1
-  #define MAX_F90_LINE_LEN_FIXED 72
-  #define MAX_F90_LINE_LEN_FREE  142
-
+  #if USE_RICE_FORTRAN_WRAPPING
   if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() ) {
     // determine line wrapping parameters -- 'pos' variables are one-based
-    bool is_fixed_format = (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
+    bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
     bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
     int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
                       : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
@@ -5510,21 +5525,16 @@ void FortranCodeGeneration_locatedNode::curprint(const std::string & str, SgLoca
     // check whether line wrapping is needed
     int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
     int free_cols = usable_cols - used_cols;
-
+    
     if( str.size() > free_cols ) {
       if( is_fixed_format ) {
         // only noncomment lines need wrapping
         if( ! (used_cols == 0 && str[0] != ' ' ) ) {
           // warn if successful wrapping is impossible
-          if( (6 + str.size()) > usable_cols ) {
-            if ( SgProject::get_verbose() >= 1 )  {
-              printf("[Rose] Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
-            }
+          if( 6 + str.size() > usable_cols )
+            printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
 
-            unp->cur.insert_newline(1);
-            unp->u_sage->curprint("     &");
-          }
-          // emit fixed-format line continuation
+            // emit fixed-format line continuation
           unp->cur.insert_newline(1);
           unp->u_sage->curprint("     &");
         }
