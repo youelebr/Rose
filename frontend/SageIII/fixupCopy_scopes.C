@@ -47,7 +47,7 @@ resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedNam
     case V_SgVariableDefinition:
     {
       // In this case the target declaration is a SgVariableDefinition, and it has to be constructed, so the input paremter is NULL.
-      ROSE_ASSERT(targetDeclaration == NULL);
+      //ROSE_ASSERT(targetDeclaration == NULL);
 
       SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(originalInitializedName->get_declptr());
       ROSE_ASSERT(variableDefinition_original != NULL);

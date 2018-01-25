@@ -28,7 +28,7 @@ namesMatch ( const string &x, const string &y )
    size_t y_length = y.length();
    ROSE_ASSERT(x_length > 0 && y_length > 0);
    return (x_length == y_length) ? strncasecmp(x.c_str(),y.c_str(),x_length) == 0 : false;
- }
+}
 
 
  FortranCodeGeneration_locatedNode::FortranCodeGeneration_locatedNode(Unparser* unp, std::string fname)
@@ -380,7 +380,6 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
   unp->cur.insert_newline(1);
 }
 
-
 void
 FortranCodeGeneration_locatedNode::unparseEntryStatement   (SgStatement* stmt, SgUnparse_Info& info)
 {
@@ -723,7 +722,14 @@ unparseDimensionStatementForArrayVariable( SgPntrArrRefExp* arrayReference )
         foundArrayVariableDeclaration = (i != statementList.end());
         break;
       }
-
+      case V_SgClassDefinition:
+      {
+        SgClassDefinition* cd = isSgClassDefinition(variableScope);
+        SgDeclarationStatementPtrList & declList = cd->get_members();
+        SgDeclarationStatementPtrList::iterator i = find(declList.begin(),declList.end(),variableDeclaration);
+        foundArrayVariableDeclaration = (i != declList.end());
+        break;
+      }
       default:
       {
         printf ("Default reached, variableScope = %p = %s \n",variableScope,variableScope->class_name().c_str());
@@ -785,7 +791,6 @@ unparseDimensionStatementForArrayVariable( SgPntrArrRefExp* arrayReference )
   // statement (since the array will be dimensioned in the variable declaration).
   return (foundArrayVariableDeclaration == false);
 }
-
 
 bool
 unparseDimensionStatement(SgStatement* stmt)
@@ -883,7 +888,6 @@ unparseDimensionStatement(SgStatement* stmt)
   // printf ("unparseDimensionStatementResult = %s \n",unparseDimensionStatementResult ? "true" : "false");
   return unparseDimensionStatementResult;
 }
-
 
 void
 FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStatement* stmt, SgUnparse_Info& info)
@@ -1064,21 +1068,21 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
   {
     // unparseExpression(attributeSpecificationStatement->get_data_statement_group_list(),info);
 
-    curprint(" ");
+    //curprint(" ");
 
     SgDataStatementGroupPtrList & dataStatementGroupList = attributeSpecificationStatement->get_data_statement_group_list();
     SgDataStatementGroupPtrList::iterator i_group = dataStatementGroupList.begin();
     while (i_group != dataStatementGroupList.end())
     {
       SgDataStatementObjectPtrList & dataStatementObjectList = (*i_group)->get_object_list();
-      SgDataStatementObjectPtrList::iterator i_object = dataStatementObjectList.begin();
+      SgDataStatementObjectPtrList::iterator i_object = dataStatementObjectList.end();
 
       // curprint("(");
-      while (i_object != dataStatementObjectList.end())
+      while (i_object != dataStatementObjectList.begin())
       {
+        i_object--;
         unparseExpression((*i_object)->get_variableReference_list(),info);
-        i_object++;
-        if (i_object != dataStatementObjectList.end())
+        if (i_object != dataStatementObjectList.begin())
         {
           curprint(", ");
         }
@@ -1185,14 +1189,11 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
         {
           curprint(", ");
         }
-
         unparseComma = true;
         unparseExpression(arrayReference,info);
       }
-
       i++;
     }
-
   }
 
   #if 0
@@ -1282,7 +1283,6 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
   }
   unp->cur.insert_newline(1);
 }
-
 
 void
 FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -1400,42 +1400,42 @@ FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse
 
   // printf ("In FortranCodeGeneration_locatedNode::unparseWhereStmt() \n");
 
- SgWhereStatement* whereStatement = isSgWhereStatement(stmt);
- ROSE_ASSERT(whereStatement != NULL);
+  SgWhereStatement* whereStatement = isSgWhereStatement(stmt);
+  ROSE_ASSERT(whereStatement != NULL);
 
- if (whereStatement->get_string_label().empty() == false)
- {
-       // Output the string label
-  curprint(whereStatement->get_string_label() + ": ");
-}
+  if (whereStatement->get_string_label().empty() == false)
+  {
+    // Output the string label
+    curprint(whereStatement->get_string_label() + ": ");
+  }
 
   // printf ("Unparse the where statement predicate \n");
-curprint("WHERE (", stmt);
+  curprint("WHERE (", stmt);
   // unp->u_exprStmt->unparseExpression(whereStatement->get_condition(), info);
- unparseExpression(whereStatement->get_condition(), info);
- curprint(") ");
+  unparseExpression(whereStatement->get_condition(), info);
+  curprint(") ");
 
- bool output_endwhere = whereStatement->get_has_end_statement();
+  bool output_endwhere = whereStatement->get_has_end_statement();
 
- if (output_endwhere == true)
- {
-       // printf ("Unparse the where statement body \n");
-  ROSE_ASSERT(whereStatement->get_body() != NULL);
-  unparseStatement(whereStatement->get_body(),info);
-       // printf ("DONE: Unparse the where statement body \n");
-}
-else
-{
-  SgStatementPtrList & statementList = whereStatement->get_body()->get_statements();
-  ROSE_ASSERT(statementList.size() == 1);
-  SgStatement* statement = *(statementList.begin());
-  ROSE_ASSERT(statement != NULL);
-       // printf ("Output true (where) statement = %p = %s \n",statement,statement->class_name().c_str());
-  SgUnparse_Info info_without_formating(info);
-  info_without_formating.set_SkipFormatting();
-  unparseStatement(statement, info_without_formating);
-          //unparseStatement(statement, info);
-}
+  if (output_endwhere == true)
+  {
+    // printf ("Unparse the where statement body \n");
+    ROSE_ASSERT(whereStatement->get_body() != NULL);
+    unparseStatement(whereStatement->get_body(),info);
+    // printf ("DONE: Unparse the where statement body \n");
+  }
+  else
+  {
+    SgStatementPtrList & statementList = whereStatement->get_body()->get_statements();
+    ROSE_ASSERT(statementList.size() == 1);
+    SgStatement* statement = *(statementList.begin());
+    ROSE_ASSERT(statement != NULL);
+    // printf ("Output true (where) statement = %p = %s \n",statement,statement->class_name().c_str());
+    SgUnparse_Info info_without_formating(info);
+    info_without_formating.set_SkipFormatting();
+    unparseStatement(statement, info_without_formating);
+    //unparseStatement(statement, info);
+  }
 
 SgElseWhereStatement* elsewhereStatement = whereStatement->get_elsewhere();
 if (elsewhereStatement != NULL)
@@ -3171,7 +3171,7 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
   // Sage node corresponds to Fortran input/output statement
      SgPrintStatement* printStatement = isSgPrintStatement(stmt);
      ROSE_ASSERT(printStatement != NULL);
-     curprint("PRINT ",stmt);
+     curprint("print ",stmt);
 
      SgExpression* fmt = printStatement->get_format();
      if (fmt != NULL)
