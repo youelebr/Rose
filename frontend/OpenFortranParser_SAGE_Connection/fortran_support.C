@@ -462,7 +462,7 @@ resetSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList
 void
 resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sourceLocatedNode )
 {
-    
+   if (targetLocatedNode == NULL) return; 
   //DBG_MAQAO
   #if 0
      printf ("In resetSourcePosition targetLocatedNode = %p = %s sourceLocatedNode = %p = %s \n",

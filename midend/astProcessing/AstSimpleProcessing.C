@@ -101,7 +101,7 @@ AstSimpleProcessing::traverse(SgNode* node, t_traverseOrder treeTraversalOrder)
 void 
 AstPrePostProcessing::traverseWithinFile(SgNode* node)
 {
-    DBG_MAQAO
+    // DBG_MAQAO
     static DummyAttribute da;
     SgTreeTraversal<DummyAttribute, DummyAttribute>::traverseWithinFile(node, da, preandpostorder);
 }
@@ -110,7 +110,7 @@ AstPrePostProcessing::traverseWithinFile(SgNode* node)
 void 
 AstSimpleProcessing::traverseWithinFile(SgNode* node, t_traverseOrder treeTraversalOrder)
 {
-    DBG_MAQAO
+    // DBG_MAQAO
     static DummyAttribute da;
     SgTreeTraversal<DummyAttribute, DummyAttribute>::traverseWithinFile(node, da, treeTraversalOrder);
 }
