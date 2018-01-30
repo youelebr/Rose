@@ -1090,7 +1090,6 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
       // curprint(")");
 
       // Now output the data values
-
       curprint(" / ");
       SgDataStatementValuePtrList  & dataStatementValueList  = (*i_group)->get_value_list();
       SgDataStatementValuePtrList::iterator i_value  = dataStatementValueList.begin();
@@ -1106,13 +1105,11 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
             ROSE_ASSERT(false);
             break;
           }
-
           case SgDataStatementValue::e_explict_list:
           {
             unparseExpression((*i_value)->get_initializer_list(),info);
             break;
           }
-
           case SgDataStatementValue::e_implicit_list:
           {
             ROSE_ASSERT((*i_value)->get_initializer_list()->get_expressions().empty() == true);
@@ -1127,13 +1124,11 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
             unparseExpression(constantExpression,info);
             break;
           }
-
           case SgDataStatementValue::e_implied_do:
           {
             printf ("Error: value_kind == e_implied_do (not yet supported) \n");
             break;
           }
-
           default:
           {
             printf ("Error: default reached value_kind = %d \n",value_kind);
