@@ -471,30 +471,30 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
   #endif
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
-  ROSE_ASSERT(targetLocatedNode != NULL);
-  ROSE_ASSERT(sourceLocatedNode != NULL);
+     ROSE_ASSERT(targetLocatedNode != NULL);
+     ROSE_ASSERT(sourceLocatedNode != NULL);
 
-  ROSE_ASSERT(targetLocatedNode->get_startOfConstruct() != NULL);
-  ROSE_ASSERT(targetLocatedNode->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(targetLocatedNode->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(targetLocatedNode->get_endOfConstruct() != NULL);
 
-  ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct() != NULL);
-  ROSE_ASSERT(sourceLocatedNode->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(sourceLocatedNode->get_endOfConstruct() != NULL);
 
-  if (sourceLocatedNode->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
-  {
-    printf ("resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
-        sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
-  }
+     if (sourceLocatedNode->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
+        {
+          printf ("resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+          sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
+        }
   // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
 
   // Remove the existing Sg_File_Info objects, they will be reset below
-  delete targetLocatedNode->get_startOfConstruct();
-  delete targetLocatedNode->get_endOfConstruct();
+     delete targetLocatedNode->get_startOfConstruct();
+     delete targetLocatedNode->get_endOfConstruct();
 
   // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
-  string filename = getCurrentFilename();
+     string filename = getCurrentFilename();
   // printf ("In resetSourcePosition(%p = %s) filename = %s \n",targetLocatedNode,targetLocatedNode->class_name().c_str(),filename.c_str());
-  ROSE_ASSERT(filename.empty() == false);
+     ROSE_ASSERT(filename.empty() == false);
 
   // Set these based on the source position information from the tokens
   // locatedNode->set_startOfConstruct (new Sg_File_Info(*(firstToken->get_startOfConstruct())));

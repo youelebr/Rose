@@ -2584,7 +2584,6 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
     case V_SgNamespaceDefinitionStatement:
     case V_SgFortranDo: //Liao 12/19/2008, My understanding is that Fortran do loop header does not introduce new symbols like  a C/C++ for loop does
     case V_SgAttributeSpecificationStatement:
-    case V_SgFormatStatement:
     {
       // printf ("Used the list of statements/declarations that are held deirectly by this scope \n");
       break;
@@ -3015,7 +3014,6 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
         case V_SgTemplateInstantiationDirectiveStatement:
         case V_SgUsingDeclarationStatement:
         case V_SgImplicitStatement:
-        case V_SgFormatStatement:
         {
           // DQ (10/22/2005): Not sure if we have to worry about this declaration's appearance in the symbol table!
           #if 0
@@ -5696,79 +5694,22 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
 
 SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 {
-  // DQ (3/4/2014): This new version of this function supports both C/C++ and also Java.
-  // If the SgJavaPackageDeclaration is noticed then the previous parent is a 
-  // SgClassDefinition and the previous previous parent is a SgClassDeclaration whose
-  // name can be used to match the filename in the SgProject's list of files.
-  // A better implementation usign an attribute (not in place until tomorrow) and
-  // from the attribute the pointer to the associated file is directly available.
-  // The later implementation is as fast as possible.
-
-  ROSE_ASSERT (astNode != NULL);
+    ROSE_ASSERT (astNode != NULL);
 
   // Make sure this is not a project node (since the SgFile exists below
   // the project and could not be found by a traversal of the parent list)
-  ROSE_ASSERT (isSgProject(astNode) == NULL);
+     ROSE_ASSERT (isSgProject(astNode) == NULL);
 
-  SgNode* previous_parent = NULL;
-  SgNode* previous_previous_parent = NULL;
+     SgNode* parent = astNode;
+     while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+        {
+       // printf ("In getFileNameByTraversalBackToFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+          parent = parent->get_parent();
+        }
+ if (!parent)
+   return NULL;
+ else return isSgFile(parent);
 
-  SgNode* parent = astNode;
-  while ( (parent != NULL) && (isSgFile(parent) == NULL) )
-  // while ( (parent != NULL) && (isSgFile(parent) == NULL) && isSgJavaPackageDeclaration(parent) == NULL)
-  {
-    previous_previous_parent = previous_parent;
-    previous_parent = parent;
-
-    parent = parent->get_parent();
-  }
-
-  if (previous_previous_parent != NULL && previous_parent != NULL)
-  {
-    // This is for a Java program and is contained within a SgJavaPackageDeclaration
-
-    SgClassDeclaration* classDeclaration = isSgClassDeclaration(previous_previous_parent);
-    if (classDeclaration != NULL)
-    {
-
-      // DQ (3/4/2014): This is the code we want to use when the attribute is in place (philippe's branch).
-      AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classDeclaration->getAttribute("sourcefile");
-
-      // "This simpler and more efficent code requires the latest work in Java support (3/6/2014)"
-
-      if (attribute) 
-      {
-        // true for all user-specified classes and false for all classes fom libraries
-        SgSourceFile *sourcefile = isSgSourceFile(attribute->getNode());
-        ROSE_ASSERT(sourcefile != NULL);
-        return sourcefile;
-      }
-    }
-  }
-  else
-  {
-    if (previous_previous_parent == NULL)
-    {
-      // The input was a SgClassDefinition (so there is no associated SgFile).
-      ROSE_ASSERT(isSgClassDefinition(astNode) != NULL);
-      return NULL;
-    }
-    else
-    {
-      // This could be a C/C++ file (handled below).
-    }
-  }
-
-  // This is where we handle the C/C++ files.
-  // if (!parent)
-  if (parent == NULL)
-  {
-          return NULL;
-  }
-  else
-  {
-    return isSgFile(parent);
-  }
 }
 
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
@@ -9704,65 +9645,57 @@ PreprocessingInfo* SageInterface::attachComment(
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
 {
   // DBG_MAQAO
-  bool successful = false;
-  if (scope == NULL)
-    scope = SageBuilder::topScopeStack();
+    bool successful = false;
+    if (scope == NULL)
+        scope = SageBuilder::topScopeStack();
+    ROSE_ASSERT(scope);
+    SgGlobal* globalScope = getGlobalScope(scope);
+    ROSE_ASSERT(globalScope);
 
-  ROSE_ASSERT(scope);
-  SgGlobal* globalScope = getGlobalScope(scope);
-  ROSE_ASSERT(globalScope);
+    PreprocessingInfo* result=NULL;
+    string content;
+    if (isSystemHeader)
+      content = "#include <" + filename + "> \n";
+    else
+      content = "#include \"" + filename + "\" \n";
 
-  PreprocessingInfo* result=NULL;
-  string content;
-  if (isSystemHeader)
-    content = "#include <" + filename + "> \n";
-  else
-    content = "#include \"" + filename + "\" \n";
-
-  SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
-  if (stmtList.size()>0) // the source file is not empty
-  {
-    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
-          j != stmtList.end (); j++)
-    {
-      //must have this judgement, otherwise wrong file will be modified!
-      //It could also be the transformation generated statements with #include attached
-      if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
-              ((*j)->get_file_info ())->isTransformation()
-          )
+    SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
+    if (stmtList.size()>0) // the source file is not empty
+     {
+      for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
+           j != stmtList.end (); j++)
       {
-        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-                                    content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
-        ROSE_ASSERT(result);
-        (*j)->addToAttachedPreprocessingInfo(result,position);
-        successful = true;
-        break;
+            //must have this judgement, otherwise wrong file will be modified!
+            //It could also be the transformation generated statements with #include attached
+        if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
+              ((*j)->get_file_info ())->isTransformation()
+           )
+         {
+           result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+                                          content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+           ROSE_ASSERT(result);
+           (*j)->addToAttachedPreprocessingInfo(result,position);
+           successful = true;
+           break;
+         }
       }
+     }
+    else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
+     {
+       cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;
+       cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
+       cerr<<"You may have to insert some statement first before inserting a header"<<endl;
+       ROSE_ASSERT(false);
+       result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+                content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
+       ROSE_ASSERT(result);
+       globalScope->addToAttachedPreprocessingInfo(result,position);
+       successful = true;
     }
+    // must be inserted once somehow
+    ROSE_ASSERT(successful==true);
+    return result;
   }
-  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!    
-  {
-    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;
-    cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
-    cerr<<"You may have to insert some statement first before inserting a header"<<endl;
-    ROSE_ASSERT(false);
-    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-             content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
-    ROSE_ASSERT(result);
-    globalScope->addToAttachedPreprocessingInfo(result,position);
-    successful = true;
-  }
-  // must be inserted once somehow
-  if(successful!=true) {
-    std::cout << "[Rose] Error to add "<< filename << std::endl;
-    std::cout << "Global filename : " << (globalScope->get_file_info ())->get_filenameString () << std::endl;
-    for (int i= 0; i < stmtList.size(); i++) {
-      std::cout << "Stmt filename : " << (stmtList[i]->get_file_info ())->get_filenameString () << std::endl;
-    }
-  }
-  ROSE_ASSERT(successful==true);
-  return result;
-}
 
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.

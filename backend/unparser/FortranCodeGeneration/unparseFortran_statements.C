@@ -1301,6 +1301,7 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
     } else {
       curprint(spaceBeforeStmt(stmt));
     }
+
     curprint("IMPLICIT NONE", stmt);
   }
   else
