@@ -51,9 +51,9 @@ void build_implicit_program_statement_if_required()
 
         // Reset the currentScope (should be a SgBasicBlock)
         currentScope = getTopOfScopeStack();
-#if 0
-        printf ("In build_implicit_program_statement_if_required(): currentScope is %s in file = %s \n",currentScope->class_name().c_str(),currentScope->get_startOfConstruct()->get_filename());
-#endif
+        #if 0
+            printf ("In build_implicit_program_statement_if_required(): currentScope is %s in file = %s \n",currentScope->class_name().c_str(),currentScope->get_startOfConstruct()->get_filename());
+        #endif
     }
 }
 
@@ -2226,7 +2226,7 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                 count, hasBindingPrivateStmt ? "true" : "false");
 
         printf("Is this used! \n");
-        ROSE_ASSERT(false);
+        //ROSE_ASSERT(false);
     }
 
     /** R449
@@ -3132,8 +3132,8 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
     {
       // What is this?
       printf("Sorry, not implemented: c_action_declaration_type_spec(DeclarationTypeSpec_CLASS) \n");
-      ROSE_ASSERT(false);
       break;
+      ROSE_ASSERT(false);
     }
 
     case DeclarationTypeSpec_unlimited:
@@ -4619,41 +4619,41 @@ void c_action_allocatable_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasC
 #endif
     }
 
-    /** R524
-     * data_stmt
-     *
-     * : (label)? T_DATA data_stmt_set ((T_COMMA)? data_stmt_set)* T_EOS
-     *
-     * @param label The label.
-     * @param keyword The DATA keyword token.
-     * @param eos End of statement token.
-     * @param count The number of data statement sets.
-     */
+/** R524
+ * data_stmt
+ *
+ * : (label)? T_DATA data_stmt_set ((T_COMMA)? data_stmt_set)* T_EOS
+ *
+ * @param label The label.
+ * @param keyword The DATA keyword token.
+ * @param eos End of statement token.
+ * @param count The number of data statement sets.
+ */
 // void c_action_data_stmt(Token_t * label, int count)
-    void c_action_data_stmt(Token_t * label, Token_t * keyword, Token_t * eos,
+void c_action_data_stmt(Token_t * label, Token_t * keyword, Token_t * eos,
             int count)
-    {
-   //DBG_MAQAO
-        // collect the data statement groups (sets) from the astNodeStack
+{
+  //DBG_MAQAO
+  // collect the data statement groups (sets) from the astNodeStack
 
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt(): keyword = %p = %s count = %d \n",
-                keyword, keyword != NULL ? keyword->text : "NULL", count);
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+  printf("In c_action_data_stmt(): keyword = %p = %s count = %d \n",
+          keyword, keyword != NULL ? keyword->text : "NULL", count);
 
-        // An AttributeSpecification statement can be the first statement in a program
-        // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
-        build_implicit_program_statement_if_required();
+  // An AttributeSpecification statement can be the first statement in a program
+  // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
+  build_implicit_program_statement_if_required();
 
-        ROSE_ASSERT(astNodeStack.size() == (size_t)count);
+  ROSE_ASSERT(astNodeStack.size() == (size_t)count);
 
-        buildAttributeSpecificationStatement(
-                SgAttributeSpecificationStatement::e_dataStatement, label, keyword);
+  buildAttributeSpecificationStatement(
+          SgAttributeSpecificationStatement::e_dataStatement, label, keyword);
 
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At END of R524 list c_action_data_stmt()");
-#endif
-    }
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At END of R524 list c_action_data_stmt()");
+  #endif
+}
 
     /**
      * R525
@@ -4696,64 +4696,66 @@ void c_action_allocatable_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasC
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_data_stmt_object_list__begin() \n");
     }
-    void c_action_data_stmt_object_list(int count)
-    {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_object_list(): count = %d \n", count);
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R526 c_action_data_stmt_object_list()");
-#endif
 
-        // Accumulate these on the astNodeStack and then collect them later
-        SgDataStatementGroup* dataGroup = new SgDataStatementGroup();
-        astNodeStack.push_front(dataGroup);
-        ROSE_ASSERT(dataGroup != NULL);
+void c_action_data_stmt_object_list(int count)
+{
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_object_list(): count = %d \n", count);
+  
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of R526 c_action_data_stmt_object_list()");
+  #endif
 
-        SgDataStatementObject* dataObject = new SgDataStatementObject();
-        ROSE_ASSERT(dataObject != NULL);
+  // Accumulate these on the astNodeStack and then collect them later
+  SgDataStatementGroup* dataGroup = new SgDataStatementGroup();
+  astNodeStack.push_front(dataGroup);
+  ROSE_ASSERT(dataGroup != NULL);
 
-        if (dataObject->get_variableReference_list() == NULL)
-        {
-            SgExprListExp* exprList = new SgExprListExp();
-            dataObject->set_variableReference_list(exprList);
+  SgDataStatementObject* dataObject = new SgDataStatementObject();
+  ROSE_ASSERT(dataObject != NULL);
 
-            exprList->set_parent(dataObject);
+  if (dataObject->get_variableReference_list() == NULL)
+  {
+    SgExprListExp* exprList = new SgExprListExp();
+    dataObject->set_variableReference_list(exprList);
 
-            setSourcePosition(exprList);
-        }
+    exprList->set_parent(dataObject);
 
-        // Output debugging information about saved state (stack) information.
-        // outputState("At MIDDLE of R526 list c_action_data_stmt_object_list()");
+    setSourcePosition(exprList);
+  }
 
-        for (int i = 0; i < count; i++)
-        {
-            ROSE_ASSERT(astExpressionStack.empty() == false);
-            SgExpression* variableReference = astExpressionStack.front();
-            ROSE_ASSERT(variableReference != NULL);
-            astExpressionStack.pop_front();
-#if 0
+  // Output debugging information about saved state (stack) information.
+  // outputState("At MIDDLE of R526 list c_action_data_stmt_object_list()");
+
+  for (int i = 0; i < count; i++)
+  {
+    ROSE_ASSERT(astExpressionStack.empty() == false);
+    SgExpression* variableReference = astExpressionStack.front();
+    ROSE_ASSERT(variableReference != NULL);
+    astExpressionStack.pop_front();
+    #if 0
             // Output debugging information about saved state (stack) information.
             outputState("At MIDDLE #2 of R526 list c_action_data_stmt_object_list()");
-#endif
-            ROSE_ASSERT(dataObject->get_variableReference_list() != NULL);
-            dataObject->get_variableReference_list()->append_expression(
-                    variableReference);
+    #endif
+    ROSE_ASSERT(dataObject->get_variableReference_list() != NULL);
+    dataObject->get_variableReference_list()->append_expression(
+            variableReference);
 
-            // printf ("Set parent of variableReference to dataObject \n");
-            variableReference->set_parent(dataObject);
-        }
+    // printf ("Set parent of variableReference to dataObject \n");
+    variableReference->set_parent(dataObject);
+  }
 
-        // printf ("Push dataObject onto astNodeStack \n");
-        // astNodeStack.push_front(dataObject);
-        dataGroup->get_object_list().push_back(dataObject);
+  // printf ("Push dataObject onto astNodeStack \n");
+  // astNodeStack.push_front(dataObject);
+  dataGroup->get_object_list().push_back(dataObject);
 
-#if 0
+  #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At END of R526 list c_action_data_stmt_object_list()");
-#endif
-    }
+  #endif
+}
 
     /**
      * R527
@@ -7285,6 +7287,7 @@ void c_action_data_ref(int numPartRef)
 
             // printf ("Test #2 variableSymbolList.size() = %zu \n",variableSymbolList.size());
           }
+
 
           #if 0
                     // Output debugging information about saved state (stack) information.
@@ -17425,77 +17428,75 @@ void c_action_only_list__begin() {
 }
 
 void c_action_only_list(int count) {
-   //DBG_MAQAO
-   if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-      printf("In c_action_only_list(): count = %d \n", count);
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_only_list(): count = %d \n", count);
 
-   #if 0
-      outputState("At TOP of R1112 list c_action_only_list()");
-   #endif
+  #if 0
+    outputState("At TOP of R1112 list c_action_only_list()");
+  #endif
 
-   // DQ (10/1/2008): Bug in OFP, discussed with Craig, will be fixed to permit
-   // this value to be passed in (assume false for now). Remove this declaration
-   // when the bug is fixed to have it be passed in via the parameter list.
-   // ofp_bool hasRenameList = astNameStack.empty() ? false : true;
-   ofp_bool hasRenameList = astNameStack.empty() ? true : false;
+  // DQ (10/1/2008): Bug in OFP, discussed with Craig, will be fixed to permit
+  // this value to be passed in (assume false for now). Remove this declaration
+  // when the bug is fixed to have it be passed in via the parameter list.
+  // ofp_bool hasRenameList = astNameStack.empty() ? false : true;
+  ofp_bool hasRenameList = astNameStack.empty() ? true : false;
 
-   // outputState("At TOP of R1112 list c_action_only_list()");
+  // outputState("At TOP of R1112 list c_action_only_list()");
 
-   // printf ("In c_action_only_list(): hasRenameList = %s \n",hasRenameList ? "true" : "false");
+  // printf ("In c_action_only_list(): hasRenameList = %s \n",hasRenameList ? "true" : "false");
 
-   // If we don't have a renameList then the tokens are on the astNameStack, else
-   // they are already processed into SgRenamePair IR nodes and on the astNodeStack.
-   if (hasRenameList == false) {
-      //DBG_MAQAO
-      // If there was not renaming, then build the SgRenamePair using empty names for the local name to signal
-      // that there was no renaming. This permits a consistant interface when they are processed by R1109.
-      for (int i = 0; i < count; i++) {
-      //DBG_MAQAO
-         // Construct the name pair for the case of the "only" clause, where there is no renaming.
-         ROSE_ASSERT(astNameStack.empty() == false);
-         SgName name = astNameStack.front()->text;
-         //DBG_MAQAO
-         //std::cout << "astNamestack.front = " << astNameStack.front()->text << std::endl;
+  // If we don't have a renameList then the tokens are on the astNameStack, else
+  // they are already processed into SgRenamePair IR nodes and on the astNodeStack.
+  if (hasRenameList == false) {
+    // If there was not renaming, then build the SgRenamePair using empty names for the local name to signal
+    // that there was no renaming. This permits a consistant interface when they are processed by R1109.
+    for (int i = 0; i < count; i++) {
+      // std::cout << " i = " << i << " Vs count = " << count <<  std::endl;
+      
+      // In Fortran when we are in the only list we can have something like : i=> i_e and this is not take in charge here but it's not false.
+      if (astNameStack.empty() == true) { return ; }
+      // Construct the name pair for the case of the "only" clause, where there is no renaming.
+      ROSE_ASSERT(astNameStack.empty() == false);
+      SgName name = astNameStack.front()->text;
+      // std::cout << "astNamestack.front = " << astNameStack.front()->text << std::endl;
 
-         // printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
-         if (matchingName(name, "OPERATOR") == true) {
-            //DBG_MAQAO
-            // Then get the next token and append it to the name.
-            astNameStack.pop_front();
-            SgName operatorName = astNameStack.front()->text;
-            name = operatorName;
-            // printf ("In c_action_only_list() this is an operator: name = %s \n",name.str());
-         }
-
-         // Use the rename pir IR node to provide a uniform interface to the construction of the SgUseStatement, but set the local-name to be "".
-         // SgRenamePair* renamePair = new SgRenamePair("",name);
-         SgRenamePair* renamePair = new SgRenamePair(name, name);
-
-         setSourcePosition(renamePair, astNameStack.front());
-
-         ROSE_ASSERT(renamePair->get_file_info() != NULL);
-
-         astNameStack.pop_front();
-
-         astNodeStack.push_front(renamePair);
-         //DBG_MAQAO
-         //std::cout << "RenamePair  : getLocal : " << renamePair->get_local_name () <<" | getuse : " << renamePair->get_use_name() << std::endl;
+      // printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
+      if (matchingName(name, "OPERATOR") == true) {
+        // Then get the next token and append it to the name.
+        astNameStack.pop_front();
+        SgName operatorName = astNameStack.front()->text;
+        name = operatorName;
+        // printf ("In c_action_only_list() this is an operator: name = %s \n",name.str());
       }
-   } else {
-      //DBG_MAQAO
-      // The SgRenamePair nodes should already be on the astNodeStack.
-      ROSE_ASSERT(astNodeStack.empty() == false);
 
-      if (astNameStack.empty() == false) {
-         printf("Error: rename list with only clause not supported yet, bug in OFP. \n");
-         ROSE_ASSERT(false);
-      }
-      ROSE_ASSERT(astNameStack.empty() == true);
-   }
-      //DBG_MAQAO
-   #if 0
-        outputState("At BOTTOM of R1112 list c_action_only_list()");
-   #endif
+      // Use the rename pir IR node to provide a uniform interface to the construction of the SgUseStatement, but set the local-name to be "".
+      // SgRenamePair* renamePair = new SgRenamePair("",name);
+      SgRenamePair* renamePair = new SgRenamePair(name, name);
+
+      setSourcePosition(renamePair, astNameStack.front());
+
+      ROSE_ASSERT(renamePair->get_file_info() != NULL);
+
+      astNameStack.pop_front();
+
+      astNodeStack.push_front(renamePair);
+      // std::cout << "RenamePair  : getLocal : " << renamePair->get_local_name () <<" | getuse : " << renamePair->get_use_name() << std::endl;
+    }
+  } else {
+    // The SgRenamePair nodes should already be on the astNodeStack.
+    ROSE_ASSERT(astNodeStack.empty() == false);
+
+    if (astNameStack.empty() == false) {
+      printf("Error: rename list with only clause not supported yet, bug in OFP. \n");
+      ROSE_ASSERT(false);
+    }
+    ROSE_ASSERT(astNameStack.empty() == true);
+  }
+
+  #if 0
+    outputState("At BOTTOM of R1112 list c_action_only_list()");
+  #endif
 }
 
     /**
