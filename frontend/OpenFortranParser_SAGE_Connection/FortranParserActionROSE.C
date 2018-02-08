@@ -11364,10 +11364,10 @@ void c_action_data_ref(int numPartRef)
 #endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
-        if (astExpressionStack.empty() == false) { 
-          printf("Warning c_action_if_stmt() label = %s \n",
-                label ? label->text : "NULL");
-        }
+        //if (astExpressionStack.empty() == false) { 
+        //  printf("Warning c_action_if_stmt() label = %s \n",
+        //        label ? label->text : "NULL");
+        //}
         ROSE_ASSERT(astExpressionStack.empty() == false);
 
         SgExpression* conditionalExpression = getTopOfExpressionStack();
