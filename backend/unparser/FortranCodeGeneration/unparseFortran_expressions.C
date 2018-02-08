@@ -1070,49 +1070,47 @@ FortranCodeGeneration_locatedNode::unparseExprInit(SgExpression* expr, SgUnparse
 
 void
 FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, SgUnparse_Info& info)
-   {
-     ROSE_ASSERT(expr);
-     SgExprListExp* expr_list = isSgExprListExp(expr);
+{
+  ROSE_ASSERT(expr);
+  SgExprListExp* expr_list = isSgExprListExp(expr);
 
-     info.set_nested_expression();
+  info.set_nested_expression();
 
   // bool paren = false;
-     bool paren = true;
-     if (paren)
-        {
-       // DQ (12/9/2010): This is a bug in test2010_136.f90.
-       // curprint("(");
-          curprint("(/");
-        }
+  bool paren = true;
+  if (paren) {
+    // DQ (12/9/2010): This is a bug in test2010_136.f90.
+    // curprint("(");
+    curprint("(/");
+  }
 
   // DQ (12/9/2010): This is a bug in test2010_136.f90.
   // curprint("/");
 
-     SgExpressionPtrList::iterator it = expr_list->get_expressions().begin();
-     while (it != expr_list->get_expressions().end())
-        {
-       // printf ("In unparseInitializerList(): *it = %p = %s \n",*it,(*it)->class_name().c_str());
+  SgExpressionPtrList::iterator it = expr_list->get_expressions().begin();
+  while (it != expr_list->get_expressions().end())
+  {
+    // printf ("In unparseInitializerList(): *it = %p = %s \n",*it,(*it)->class_name().c_str());
 
-          unparseExpression(*it, info);
-          it++;
-          if (it != expr_list->get_expressions().end())
-             {
-               curprint(","); 
-             }
-        }
+    unparseExpression(*it, info);
+    it++;
+    if (it != expr_list->get_expressions().end())
+    {
+      curprint(","); 
+    }
+  }
 
   // DQ (12/9/2010): This is a bug in test2010_136.f90.
   // curprint("/");
 
-     if (paren)
-        {
-       // DQ (12/9/2010): This is a bug in test2010_136.f90.
-       // curprint(")");
-          curprint("/)");
-        }
+  if (paren) {
+    // DQ (12/9/2010): This is a bug in test2010_136.f90.
+    // curprint(")");
+    curprint("/)");
+  }
 
-     info.unset_nested_expression();
-   }
+  info.unset_nested_expression();
+}
 
 void 
 FortranCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)

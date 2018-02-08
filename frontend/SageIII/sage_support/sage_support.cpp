@@ -1500,13 +1500,13 @@ SgBinaryComposite::callFrontEnd()
 
 int
 SgUnknownFile::callFrontEnd()
-   {
+{
   // DQ (2/3/2009): This function is defined, but should never be called.
-     printf ("Error: calling SgUnknownFile::callFrontEnd() \n");
-     ROSE_ASSERT(false);
+  printf ("Error: calling SgUnknownFile::callFrontEnd() \n");
+  ROSE_ASSERT(false);
 
-     return 0;
-   }
+return 0;
+}
 
 SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
     : p_genericFileList(NULL), p_interpretations(NULL)

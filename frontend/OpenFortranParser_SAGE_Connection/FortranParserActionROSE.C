@@ -957,27 +957,27 @@ void c_action_label(Token_t * lbl)
         // printf ("Leaving c_action_int_literal_constant(): astExpressionStack.size() = %ld \n",astExpressionStack.size());
     }
 
-    /**
-     * R407
-     * kind_param
-     *
-     * @param kind T_DIGIT_STRING or T_IDENT token which is the kind_param.
-     */
-    void c_action_kind_param(Token_t * kind)
-    {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_kind_param(): kind = %p = %s \n", kind,
-                kind != NULL ? kind->text : "NULL");
-    }
+/**
+ * R407
+ * kind_param
+ *
+ * @param kind T_DIGIT_STRING or T_IDENT token which is the kind_param.
+ */
+void c_action_kind_param(Token_t * kind)
+{
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_kind_param(): kind = %p = %s \n", kind,
+          kind != NULL ? kind->text : "NULL");
+}
 
-    /**
-     * R411
-     * boz_literal_constant
-     *
-     */
-    void c_action_boz_literal_constant(Token_t * boz_const)
-    {
+/**
+ * R411
+ * boz_literal_constant
+ *
+ */
+void c_action_boz_literal_constant(Token_t * boz_const)
+{
    //DBG_MAQAO
         // CER (8/7/2011): A boz constant is typeless so I'm not sure converting
         // to an integer type is the correct thing to do.  Perhaps it deserves a
@@ -1011,130 +1011,136 @@ void c_action_label(Token_t * lbl)
         astExpressionStack.push_front(pValueExp);
     }
 
-    /** R416
-     * signed_real_literal_constant
-     *  :   (T_PLUS|T_MINUS)? real_literal_constant
-     *
-     * @param sign The sign: positive, negative, or null.
-     */
-    void c_action_signed_real_literal_constant(Token_t * sign)
+/** R416
+ * signed_real_literal_constant
+ *  :   (T_PLUS|T_MINUS)? real_literal_constant
+ *
+ * @param sign The sign: positive, negative, or null.
+ */
+void c_action_signed_real_literal_constant(Token_t * sign)
+{
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_signed_real_literal_constant(): sign =%p =%s. \n",
+          sign, sign != NULL ? sign->text : "NULL");
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of R416 c_action_signed_real_literal_constant()");
+  #endif
+
+  //if (sign == NULL)
+  //{
+    // This is a bug in OFP (I think) See test2007_144.f90.
+    // There should be a valid token for the "-" if it was present.
+    ROSE_ASSERT(astExpressionStack.empty() == false);
+    SgExpression* expression = astExpressionStack.front();
+    SgValueExp* valueExpression = isSgValueExp(expression);
+    ROSE_ASSERT(valueExpression != NULL);
+
+    switch (valueExpression->variantT())
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_signed_real_literal_constant(): sign = %p = %s \n",
-                sign, sign != NULL ? sign->text : "NULL");
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R416 c_action_signed_real_literal_constant()");
-#endif
+      case V_SgFloatVal:
+      {
+        SgFloatVal* floatValue = isSgFloatVal(valueExpression);
 
-        if (sign == NULL)
-        {
-            // This is a bug in OFP (I think) See test2007_144.f90.
-            // There should be a valid token for the "-" if it was present.
-            ROSE_ASSERT(astExpressionStack.empty() == false);
-            SgExpression* expression = astExpressionStack.front();
-            SgValueExp* valueExpression = isSgValueExp(expression);
-            ROSE_ASSERT(valueExpression != NULL);
+        // DQ (1/20/2008): This bug in OFP is now fixed, I think, nope not yet!
+        // Flip the sign on the value stored internally.
+        // floatValue->set_value( - floatValue->get_value() );
+        float val = floatValue->get_value();
 
-            switch (valueExpression->variantT())
-            {
-                case V_SgFloatVal:
-                {
-                    SgFloatVal* floatValue = isSgFloatVal(valueExpression);
+        if (sign != NULL) { 
+          // if (sign->text == "-") { //doesn't work the character must not be exactly a "-"
+            val = -val;
+            // Change the sign on the original string as well.
+            string valueString = floatValue->get_valueString();
 
-                    // DQ (1/20/2008): This bug in OFP is now fixed, I think, nope not yet!
-                    // Flip the sign on the value stored internally.
-                    // floatValue->set_value( - floatValue->get_value() );
-                    floatValue->set_value(floatValue->get_value());
-
-                    // Change the sign on the original string as well.
-                    string valueString = floatValue->get_valueString();
-
-                    // DQ (1/20/2008): This bug in OFP is now fixed, I think
-                    // if (valueString.empty() == false)
-                    //      floatValue->set_valueString( "-" + valueString );
-                    ROSE_ASSERT(valueString.empty() == false);
-                    break;
-                }
-
-                default:
-                {
-                    printf(
-                            "Error, default reached in switch: valueExpression = %p = %s \n",
-                            valueExpression, valueExpression->class_name().c_str());
-                    ROSE_ASSERT(false);
-                }
-            }
+            // DQ (1/20/2008): This bug in OFP is now fixed, I think
+            if (valueString.empty() == false)
+              floatValue->set_valueString( "-" + valueString );
+          // }
         }
-        else
-        {
-            // This is likely the case of "+" used explicitly
+        
+        floatValue->set_value(val);
 
-            // No need to do anything here (unless we want to explicitly preserve the "+".
-            // We can do this later by using the SgUnaryPlus operator.
-        }
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At BOTTOM of R416 c_action_signed_real_literal_constant()");
-#endif
+        //ROSE_ASSERT(valueString.empty() == false);
+        break;
+      }
+
+      default:
+      {
+        printf("Error, default reached in switch: valueExpression = %p = %s \n",
+                valueExpression, valueExpression->class_name().c_str());
+        ROSE_ASSERT(false);
+      }
     }
+  // }
+  // else
+  // {
+      // This is likely the case of "+" used explicitly
 
-    /** R417
-     * real_literal_constant
-     *      :   REAL_CONSTANT ( T_UNDERSCORE kind_param )?
-     *      |   DOUBLE_CONSTANT ( T_UNDERSCORE kind_param )?
-     *
-     * Replaced by
-     *      :       T_DIGIT_STRING T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
-     *      |       T_DIGIT_STRING T_PERIOD (T_UNDERSCORE kind_param)?
-     *      |       T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
-     *
-     * @param digits The integral part
-     * @param fractionExp The fractional part and exponent
-     * @param kindParam The kind parameter
-     */
-    void c_action_real_literal_constant(Token_t * realConstant, Token_t * kindParam)
-    {
-   //DBG_MAQAO
-        // Build a SgLongDoubleVal for real with kind param and SgFloatVal for others.
-        // As of 02/14/2011, SgLongLongDoubleVal is not supported.
+      // No need to do anything here (unless we want to explicitly preserve the "+".
+      // We can do this later by using the SgUnaryPlus operator.
+  // }
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of R416 c_action_signed_real_literal_constant()");
+  #endif
+}
 
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In c_action_real_literal_constant(): realConstant = %p = %s kindParam = %p = %s \n",
-                realConstant,
-                realConstant != NULL ? realConstant->text : "NULL", kindParam,
-                kindParam != NULL ? kindParam->text : "NULL");
+/** R417
+ * real_literal_constant
+ *      :   REAL_CONSTANT ( T_UNDERSCORE kind_param )?
+ *      |   DOUBLE_CONSTANT ( T_UNDERSCORE kind_param )?
+ *
+ * Replaced by
+ *      :       T_DIGIT_STRING T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
+ *      |       T_DIGIT_STRING T_PERIOD (T_UNDERSCORE kind_param)?
+ *      |       T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
+ *
+ * @param digits The integral part
+ * @param fractionExp The fractional part and exponent
+ * @param kindParam The kind parameter
+ */
+void c_action_real_literal_constant(Token_t * realConstant, Token_t * kindParam)
+{
+  //DBG_MAQAO
+  // Build a SgLongDoubleVal for real with kind param and SgFloatVal for others.
+  // As of 02/14/2011, SgLongLongDoubleVal is not supported.
 
-#if !SKIP_C_ACTION_IMPLEMENTATION
-        // There should at least be a value string to represent the number
-        ROSE_ASSERT(realConstant != NULL);
-        ROSE_ASSERT(realConstant->text != NULL);
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_real_literal_constant(): realConstant = %p = %s kindParam = %p = %s \n",
+          realConstant,
+          realConstant != NULL ? realConstant->text : "NULL", kindParam,
+          kindParam != NULL ? kindParam->text : "NULL");
 
-        // preserve kind parameter if any
-        string constant_text = realConstant->text + (kindParam ? string("_")
-                + kindParam->text : "");
-        SgValueExp* pValueExp = new SgFloatVal(atof(realConstant->text),
-                constant_text);
-        setSourcePosition(pValueExp, realConstant);
+  #if !SKIP_C_ACTION_IMPLEMENTATION
+    // There should at least be a value string to represent the number
+    ROSE_ASSERT(realConstant != NULL);
+    ROSE_ASSERT(realConstant->text != NULL);
 
-        astExpressionStack.push_front(pValueExp);
-#endif
+    // preserve kind parameter if any
+    string constant_text = realConstant->text + (kindParam ? string("_")
+            + kindParam->text : "");
+    SgValueExp* pValueExp = new SgFloatVal(atof(realConstant->text),
+            constant_text);
+    setSourcePosition(pValueExp, realConstant);
 
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At BOTTOM of R417 c_action_real_literal_constant()");
-#endif
-    }
+    astExpressionStack.push_front(pValueExp);
+  #endif
 
-    /**
-     * R421
-     * complex_literal_constant
-     *
-     */
-    void c_action_complex_literal_constant()
-    {
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of R417 c_action_real_literal_constant()");
+  #endif
+}
+
+/**
+ * R421
+ * complex_literal_constant
+ *
+ */
+void c_action_complex_literal_constant()
+{
    //DBG_MAQAO
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_complex_literal_constant() \n");
@@ -3486,7 +3492,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 
         default:
         {
-            //if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+          if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL) 
             printf("In R503 c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",
                 attrKeyword, attrKeyword != NULL ? attrKeyword->text : "NULL",
                 attr);
@@ -4637,7 +4643,7 @@ void c_action_data_stmt(Token_t * label, Token_t * keyword, Token_t * eos,
   // collect the data statement groups (sets) from the astNodeStack
 
   if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-  printf("In c_action_data_stmt(): keyword = %p = %s count = %d \n",
+    printf("In c_action_data_stmt(): keyword = %p = %s count = %d \n",
           keyword, keyword != NULL ? keyword->text : "NULL", count);
 
   // An AttributeSpecification statement can be the first statement in a program
@@ -4662,47 +4668,47 @@ void c_action_data_stmt(Token_t * label, Token_t * keyword, Token_t * eos,
      */
     void c_action_data_stmt_set()
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_set() \n");
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_set() \n");
     }
 
-    /**
-     * R526
-     * data_stmt_object
-     *
-     */
-    void c_action_data_stmt_object()
-    {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_object() \n");
+/**
+  * R526
+  * data_stmt_object
+  *
+  */
+void c_action_data_stmt_object()
+{
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_object() \n");
 
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R526 c_action_data_stmt_object()");
-#endif
-    }
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of R526 c_action_data_stmt_object()");
+  #endif
+}
 
-    /** R526 list
-     * data_stmt_object_list
-     *      :       data_stmt_object ( T_COMMA data_stmt_object )*
-     *
-     * @param count The number of items in the list.
-     */
-    void c_action_data_stmt_object_list__begin()
-    {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_object_list__begin() \n");
-    }
+/** R526 list
+ * data_stmt_object_list
+ *      :       data_stmt_object ( T_COMMA data_stmt_object )*
+ *
+ * @param count The number of items in the list.
+ */
+void c_action_data_stmt_object_list__begin()
+{
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_object_list__begin() \n");
+}
 
 void c_action_data_stmt_object_list(int count)
 {
   //DBG_MAQAO
   if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
     printf("In c_action_data_stmt_object_list(): count = %d \n", count);
-  
+
   #if 0
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of R526 c_action_data_stmt_object_list()");
@@ -4740,8 +4746,8 @@ void c_action_data_stmt_object_list(int count)
             outputState("At MIDDLE #2 of R526 list c_action_data_stmt_object_list()");
     #endif
     ROSE_ASSERT(dataObject->get_variableReference_list() != NULL);
-    dataObject->get_variableReference_list()->append_expression(
-            variableReference);
+    // dataObject->get_variableReference_list()->append_expression(variableReference);
+    dataObject->get_variableReference_list()->prepend_expression(variableReference);
 
     // printf ("Set parent of variableReference to dataObject \n");
     variableReference->set_parent(dataObject);
@@ -4757,27 +4763,26 @@ void c_action_data_stmt_object_list(int count)
   #endif
 }
 
-    /**
-     * R527
-     * data_implied_do
-     *
-     * @param id T_IDENT token.
-     * @param hasThirdExpr Flag to specify if optional third expression was
-     * given.  True if expression given; false if not.
-     */
-    void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
-    {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In c_action_data_implied_do(): id = %p = %s hasThirdExpr = %s \n",
+/**
+ * R527
+ * data_implied_do
+ *
+ * @param id T_IDENT token.
+ * @param hasThirdExpr Flag to specify if optional third expression was
+ * given.  True if expression given; false if not.
+ */
+void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
+{
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_implied_do(): id = %p = %s hasThirdExpr = %s \n",
                 id, id != NULL ? id->text : "NULL",
                 hasThirdExpr ? "true" : "false");
 
-#if 1
+  #if 1
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R527 c_action_data_implied_do()");
-#endif
+  #endif
 
         int numberOfImplicitDoLoopControlValues = 0;
         list<SgExpression*>::iterator i = astExpressionStack.begin();
@@ -4812,10 +4817,10 @@ void c_action_data_stmt_object_list(int count)
         ROSE_ASSERT(lowerBound != NULL);
         astExpressionStack.pop_front();
 
-#if 0
+  #if 0
         // Output debugging information about saved state (stack) information.
         outputState("Debugging the doLoopVar in R527 c_action_data_implied_do()");
-#endif
+  #endif
 
         // This is not available from OFP, so we might have to dig for it later.
         // printf ("Warning: implied do loop variable is not availble in OFP \n");
@@ -4834,11 +4839,11 @@ void c_action_data_stmt_object_list(int count)
                 doLoopVarName, currentScope, variableSymbol, functionSymbol,
                 classSymbol);
 
-#if 0
+  #if 0
         printf ("In c_action_data_implied_do(): variableSymbol = %p \n",variableSymbol);
         printf ("In c_action_data_implied_do(): functionSymbol = %p \n",functionSymbol);
         printf ("In c_action_data_implied_do(): classSymbol    = %p \n",classSymbol);
-#endif
+  #endif
 
         ROSE_ASSERT(variableSymbol != NULL);
         doLoopVar = new SgVarRefExp(variableSymbol);
@@ -4870,11 +4875,11 @@ void c_action_data_stmt_object_list(int count)
 
         astExpressionStack.push_front(impliedDo);
 
-#if 0
+  #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R527 c_action_data_implied_do()");
-#endif
-    }
+  #endif
+}
 
 // DQ (4/5/2010): Added F08 support specific to OFP 0.8.0
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
@@ -4907,9 +4912,9 @@ void c_action_data_stmt_object_list(int count)
      */
     void c_action_data_i_do_object()
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_i_do_object() \n");
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_i_do_object() \n");
 #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R528 c_action_data_i_do_object()");
@@ -4924,15 +4929,15 @@ void c_action_data_stmt_object_list(int count)
      */
     void c_action_data_i_do_object_list__begin()
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_i_do_object_list__begin() \n");
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_i_do_object_list__begin() \n");
     }
     void c_action_data_i_do_object_list(int count)
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_i_do_object_list(): count = %d \n", count);
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_i_do_object_list(): count = %d \n", count);
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -4964,138 +4969,136 @@ void c_action_data_stmt_object_list(int count)
 #endif
     }
 
-    /**
-     * R530
-     * data_stmt_value
-     *
-     * TODO: This action method may need params.  Look at the grammar rule.
-     */
+/**
+ * R530
+ * data_stmt_value
+ *
+ * TODO: This action method may need params.  Look at the grammar rule.
+ */
 // void c_action_data_stmt_value()
-    void c_action_data_stmt_value(Token_t *asterisk)
-    {   
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_value(): asterisk = %p = %s \n",
-                asterisk, asterisk != NULL ? asterisk->text : "NULL");
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R530 c_action_data_stmt_value()");
-#endif
+void c_action_data_stmt_value(Token_t *asterisk)
+{   
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_value(): asterisk = %p = %s \n",
+          asterisk, asterisk != NULL ? asterisk->text : "NULL");
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of R530 c_action_data_stmt_value()");
+  #endif
 
-        SgDataStatementGroup* dataGroup = NULL;
-        ROSE_ASSERT(astNodeStack.empty() == false);
-        if (astNodeStack.empty() == true)
-        {
-            dataGroup = new SgDataStatementGroup();
-            astNodeStack.push_front(dataGroup);
-        }
-        else
-        {
-            dataGroup = isSgDataStatementGroup(astNodeStack.front());
-            ROSE_ASSERT(dataGroup != NULL);
-        }
-        ROSE_ASSERT(dataGroup != NULL);
+  SgDataStatementGroup* dataGroup = NULL;
+  ROSE_ASSERT(astNodeStack.empty() == false);
+  if (astNodeStack.empty() == true)
+  {
+    //DBG_MAQAO
+    dataGroup = new SgDataStatementGroup();
+    astNodeStack.push_front(dataGroup);
+  }
+  else
+  {
+    dataGroup = isSgDataStatementGroup(astNodeStack.front());
+    ROSE_ASSERT(dataGroup != NULL);
+  }
+  ROSE_ASSERT(dataGroup != NULL);
 
-        SgDataStatementValue* dataValue = new SgDataStatementValue();
+  SgDataStatementValue* dataValue = new SgDataStatementValue();
 
-        if (dataValue->get_initializer_list() == NULL)
-        {
-            SgExprListExp* exprList = new SgExprListExp();
-            dataValue->set_initializer_list(exprList);
+  if (dataValue->get_initializer_list() == NULL)
+  {
+    SgExprListExp* exprList = new SgExprListExp();
+    dataValue->set_initializer_list(exprList);
 
-            exprList->set_parent(dataValue);
+    exprList->set_parent(dataValue);
 
-            setSourcePosition(exprList);
-        }
+    setSourcePosition(exprList);
+  }
 
-        if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-        printf("astExpressionStack.size() = %zu \n", astExpressionStack.size());
+  if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
+    printf("astExpressionStack.size() = %zu \n", astExpressionStack.size());
 
-        if (astExpressionStack.size() == 0)
-        {
-            printf("Error: astExpressionStack.size() == 0 \n");
-            ROSE_ASSERT(false);
-        }
-        else
-        {
-            if (astExpressionStack.size() == 1)
-            {
-                if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-                printf(
-                        "Case of SgDataStatementValue::e_explict_list (expression, typically a simple value) \n");
+  if (astExpressionStack.size() == 0)
+  {
+    printf("Error: astExpressionStack.size() == 0 \n");
+    ROSE_ASSERT(false);
+  }
+  else
+  {
+    if (astExpressionStack.size() == 1)
+    {
+      if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
+        printf("Case of SgDataStatementValue::e_explict_list (expression, typically a simple value) \n");
 
-                dataValue->set_data_initialization_format(
-                        SgDataStatementValue::e_explict_list);
+      dataValue->set_data_initialization_format(SgDataStatementValue::e_explict_list);
 
-                // Make sure this is not an implied DO expression
-                ROSE_ASSERT(isSgImpliedDo(astExpressionStack.front()) == NULL);
-            }
-            else
-            {
-                if (astExpressionStack.size() == 2)
-                {
-                    if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-                    printf(
-                            "Case of SgDataStatementValue::e_implicit_list (repeat * value) \n");
-
-                    dataValue->set_data_initialization_format(
-                            SgDataStatementValue::e_implicit_list);
-                }
-                else
-                {
-                    // See test2007_107.f90
-                    printf(
-                            "This might be an implied do loop (need an example to debug this case!) \n");
-                    ROSE_ASSERT(false);
-                }
-            }
-        }
-
-        switch (dataValue->get_data_initialization_format())
-        {
-            case SgDataStatementValue::e_explict_list:
-            {
-                SgExpression* expression = astExpressionStack.front();
-                astExpressionStack.pop_front();
-                dataValue->get_initializer_list()->append_expression(expression);
-                break;
-            }
-
-            case SgDataStatementValue::e_implicit_list:
-            {
-                // Get both values on the astExpression stack.
-                SgExpression* constant_expression = astExpressionStack.front();
-                dataValue->set_constant_expression(constant_expression);
-                constant_expression->set_parent(dataValue);
-                astExpressionStack.pop_front();
-
-                SgExpression* repeat_expression = astExpressionStack.front();
-                dataValue->set_repeat_expression(repeat_expression);
-                repeat_expression->set_parent(dataValue);
-                astExpressionStack.pop_front();
-                break;
-            }
-
-            default:
-            {
-                printf(
-                        "Error: default reached dataValue->get_data_initialization_format() = %d \n",
-                        dataValue->get_data_initialization_format());
-                ROSE_ASSERT(false);
-            }
-        }
-
-        // We should have a SgDataStatementObject at the top of the astNodeStack...
-        // SgDataStatementObject* dataObject = isSgDataStatementObject(astNodeStack.front());
-        // ROSE_ASSERT(dataObject != NULL);
-
-        dataGroup->get_value_list().push_back(dataValue);
-
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At BOTTOM of R530 c_action_data_stmt_value()");
-#endif
+      // Make sure this is not an implied DO expression
+      ROSE_ASSERT(isSgImpliedDo(astExpressionStack.front()) == NULL);
     }
+    else
+    {
+      if (astExpressionStack.size() == 2)
+      {
+      if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
+        printf("Case of SgDataStatementValue::e_implicit_list (repeat * value) \n");
+
+      dataValue->set_data_initialization_format(
+              SgDataStatementValue::e_implicit_list);
+      }
+      else
+      {
+        // See test2007_107.f90
+        printf("This might be an implied do loop (need an example to debug this case!) \n");
+        ROSE_ASSERT(false);
+      }
+    }
+  }
+
+
+  switch (dataValue->get_data_initialization_format())
+  {
+    case SgDataStatementValue::e_explict_list:
+    {
+      SgExpression* expression = astExpressionStack.front();
+      astExpressionStack.pop_front();
+      dataValue->get_initializer_list()->append_expression(expression);
+      break;
+    }
+
+    case SgDataStatementValue::e_implicit_list:
+    {
+      //DBG_MAQAO
+      // Get both values on the astExpression stack.
+      SgExpression* constant_expression = astExpressionStack.front();
+      dataValue->set_constant_expression(constant_expression);
+      constant_expression->set_parent(dataValue);
+      astExpressionStack.pop_front();
+
+      SgExpression* repeat_expression = astExpressionStack.front();
+      dataValue->set_repeat_expression(repeat_expression);
+      repeat_expression->set_parent(dataValue);
+      astExpressionStack.pop_front();
+      break;
+    }
+
+    default:
+    {
+      printf("Error: default reached dataValue->get_data_initialization_format() = %d \n",
+              dataValue->get_data_initialization_format());
+      ROSE_ASSERT(false);
+    }
+  }
+
+  // We should have a SgDataStatementObject at the top of the astNodeStack...
+  // SgDataStatementObject* dataObject = isSgDataStatementObject(astNodeStack.front());
+  // ROSE_ASSERT(dataObject != NULL);
+
+  dataGroup->get_value_list().push_back(dataValue);
+
+  #if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of R530 c_action_data_stmt_value()");
+  #endif
+}
 
     /** R530 list
      * data_stmt_value_list
@@ -5105,9 +5108,9 @@ void c_action_data_stmt_object_list(int count)
      */
     void c_action_data_stmt_value_list__begin()
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_value_list__begin() \n");
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_value_list__begin() \n");
 #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R530 (list: begin) c_action_data_stmt_value_list_begin()");
@@ -5115,9 +5118,9 @@ void c_action_data_stmt_object_list(int count)
     }
     void c_action_data_stmt_value_list(int count)
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_value_list(): count = %d \n", count);
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_value_list(): count = %d \n", count);
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -5161,8 +5164,8 @@ void c_action_data_stmt_object_list(int count)
     void c_action_data_stmt_constant()
     {
    //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_data_stmt_constant() \n");
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_data_stmt_constant() \n");
     }
 
     /** R535
@@ -5392,7 +5395,7 @@ void c_action_data_stmt_object_list(int count)
     {
    //DBG_MAQAO
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_optional_stmt(): label = %p \n", label);
+        printf("In c_action_optional_stmt(): label = %p,  \n", label);
 
         // An AttributeSpecification statement can be the first statement in a program
         // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
@@ -10027,10 +10030,9 @@ void c_action_data_ref(int numPartRef)
     void c_action_pointer_assignment_stmt(Token_t *label, Token_t *eos,
             ofp_bool hasBoundsSpecList, ofp_bool hasBRList)
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In R735 c_action_pointer_assignment_stmt() label = %p hasBoundsSpecList = %s hasBRList = %s \n",
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+        printf("In R735 c_action_pointer_assignment_stmt() label = %p hasBoundsSpecList = %s hasBRList = %s \n",
                 label, hasBoundsSpecList ? "true" : "false",
                 hasBRList ? "true" : "false");
 
@@ -11421,7 +11423,7 @@ void c_action_data_ref(int numPartRef)
         resetEndingSourcePosition(astScopeStack.front(), lastStatement);
 
         if (astScopeStack.front()->get_endOfConstruct()->get_line() == astScopeStack.front()->get_startOfConstruct()->get_line() && SgProject::get_verbose() > 1) {
-            DBG_MAQAO
+            //DBG_MAQAO
             printf("Error in file : %s\ndump info : \nline : %d \ntext : %s\n the start and the end of the construct is at the same place ! \n", getCurrentFilename(), ifKeyword->line, ifKeyword->text );
         }
         //ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
