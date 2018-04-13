@@ -3492,7 +3492,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 
         default:
         {
-          if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL) 
+          //if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL) 
             printf("In R503 c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",
                 attrKeyword, attrKeyword != NULL ? attrKeyword->text : "NULL",
                 attr);
@@ -6633,88 +6633,113 @@ void c_action_implicit_stmt(Token_t * label, Token_t * implicitKeyword,
      * @param id Identifier.
      * @param hasShapeSpecList True if has an explicit shape spec list.
      */
-    void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
+void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
+{
+  //DBG_MAQAO
+  if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+    printf("In c_action_common_block_object(): id = %p = %s hasShapeSpecList = %s \n",
+          id, id != NULL ? id->text : "NULL",
+          hasShapeSpecList ? "true" : "false");
+
+  ROSE_ASSERT(id != NULL);
+  SgName variableName = id->text;
+
+  // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
+  // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // ROSE_ASSERT(false);
+
+  // Look for the symbol associated with the variable given by the name starting
+  // at the current scope and working backwards through the parent scopes.
+  // SgVariableSymbol* variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
+  SgVariableSymbol* variableSymbol =
+  trace_back_through_parent_scopes_lookup_variable_symbol(
+          variableName, getTopOfScopeStack());
+
+  SgExpression* constructedReference = NULL;
+
+  // To be referenced in the common block it should have been defined already, but this is not required
+  // ROSE_ASSERT(variableSymbol != NULL);
+  // printf ("In c_action_common_block_object(): variableSymbol = %p \n",variableSymbol);
+  if (variableSymbol != NULL)
+  {
+    SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
+    setSourcePosition(variableReference, id);
+
+    if (hasShapeSpecList == true)
     {
-   //DBG_MAQAO
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In c_action_common_block_object(): id = %p = %s hasShapeSpecList = %s \n",
-                id, id != NULL ? id->text : "NULL",
-                hasShapeSpecList ? "true" : "false");
+      // I think we need to build the array reference for this case.
+      printf("In c_action_common_block_object(): id = %p = %s hasShapeSpecList = %s \n",
+          id, id != NULL ? id->text : "NULL",
+          hasShapeSpecList ? "true" : "false");
+      printf("Sorry, hasShapeSpecList == true, case not implemented \n");
+      ROSE_ASSERT(false);
 
-        ROSE_ASSERT(id != NULL);
-        SgName variableName = id->text;
+      if (astExpressionStack.empty() == false)
+      {
+          //DBG_MAQAO
+          SgExpression* indexExpression = astExpressionStack.front();
 
-        // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-        // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
-        // ROSE_ASSERT(false);
+          astExpressionStack.pop_front();
+          SgPntrArrRefExp* arrayRefExpression = new SgPntrArrRefExp(
+                  variableReference, indexExpression,/* type should not be specified */
+                  NULL);
+          ROSE_ASSERT(arrayRefExpression != NULL);
 
-        // Look for the symbol associated with the variable given by the name starting
-        // at the current scope and working backwards through the parent scopes.
-        // SgVariableSymbol* variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
-        SgVariableSymbol* variableSymbol =
-        trace_back_through_parent_scopes_lookup_variable_symbol(
-                variableName, getTopOfScopeStack());
+          // arrayReference->set_parent(arrayRefExpression);
+          // subscriptRange->set_parent(arrayRefExpression);
 
-        SgExpression* constructedReference = NULL;
+          setSourcePosition(arrayRefExpression);
 
-        // To be referenced in the common block it should have been defined already, but this is not required
-        // ROSE_ASSERT(variableSymbol != NULL);
-        // printf ("In c_action_common_block_object(): variableSymbol = %p \n",variableSymbol);
-        if (variableSymbol != NULL)
-        {
-            SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
-            setSourcePosition(variableReference, id);
+          // constructedReference = NULL;
+          constructedReference = arrayRefExpression;
 
-            if (hasShapeSpecList == true)
-            {
-                // I think we need to build the array reference for this case.
-                // printf ("hasShapeSpecList == true, case not implemented \n");
-
-                printf("Sorry, hasShapeSpecList == true, case not implemented \n");
-                ROSE_ASSERT(false);
-
-                constructedReference = NULL;
-            }
-            else
-            {
-                constructedReference = variableReference;
-            }
-        }
-        else
-        {
-            // The variable has not previously been declared.
-            // OR it maybe declared at some point in the future (see test2010_51.90).
-
-#if 1
-            // DQ (1/19/2011): Build the implicit variable
-            buildImplicitVariableDeclaration(variableName);
-
-            // Now verify that it is present.
-            variableSymbol
-            = trace_back_through_parent_scopes_lookup_variable_symbol(
-                    variableName, astScopeStack.front());
-            ROSE_ASSERT(variableSymbol != NULL);
-#else
-            // Note that the second time we look for it we will get a valid symbol.
-            variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
-            ROSE_ASSERT(variableSymbol != NULL);
-#endif
-            constructedReference = new SgVarRefExp(variableSymbol);
-            setSourcePosition(constructedReference, id);
-
-            // printf ("The variable has not previously been declared (case not implemented)\n");
-            // ROSE_ASSERT(false);
-        }
-
-        ROSE_ASSERT(constructedReference != NULL);
-        astExpressionStack.push_front(constructedReference);
-
-#if 1
-        // Output debugging information about saved state (stack) information.
-        outputState("At BOTTOM of R558 c_action_common_block_object()");
-#endif
+          astExpressionStack.push_front(arrayRefExpression);
+      }
+      else {
+        printf("Sorry, hasShapeSpecList == true, case not implemented \n");
+        //ROSE_ASSERT(false);
+      }
+      constructedReference = NULL;
     }
+    else
+    {
+      constructedReference = variableReference;
+    }
+  }
+  else
+  {
+    // The variable has not previously been declared.
+    // OR it maybe declared at some point in the future (see test2010_51.90).
+
+    #if 1
+      // DQ (1/19/2011): Build the implicit variable
+      buildImplicitVariableDeclaration(variableName);
+
+      // Now verify that it is present.
+      variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(
+                          variableName, astScopeStack.front());
+      ROSE_ASSERT(variableSymbol != NULL);
+    #else
+      // Note that the second time we look for it we will get a valid symbol.
+      variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
+      ROSE_ASSERT(variableSymbol != NULL);
+    #endif
+    constructedReference = new SgVarRefExp(variableSymbol);
+    setSourcePosition(constructedReference, id);
+
+    // printf ("The variable has not previously been declared (case not implemented)\n");
+    // ROSE_ASSERT(false);
+  }
+
+  ROSE_ASSERT(constructedReference != NULL);
+  astExpressionStack.push_front(constructedReference);
+
+  #if 1
+    // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of R558 c_action_common_block_object()");
+  #endif
+}
+
 
     /** R601
      * variable

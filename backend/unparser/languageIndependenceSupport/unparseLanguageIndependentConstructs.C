@@ -42,15 +42,15 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocat
     if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
     {
       // determine line wrapping parameters -- 'pos' variables are one-based
-<<<<<<< HEAD
+// <<<<<<< HEAD
       //bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
       bool is_fixed_format = (unp->currentFile==NULL) ||
           (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
           (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
 
-=======
-      bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
->>>>>>> parent of d62c26a... Update to better handle C and Fortran
+// =======
+//       bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
+// >>>>>>> parent of d62c26a... Update to better handle C and Fortran
       bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
       int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
                         : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
@@ -61,7 +61,7 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocat
       int free_cols = usable_cols - used_cols;
       if( str.size() > free_cols )
       {
-        if( is_fixed_format )
+        if( is_fixed_format)
         {
           // only noncomment lines need wrapping
           if( ! (used_cols == 0 && str[0] != ' ' ) )
@@ -76,11 +76,11 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocat
             unp->u_sage->curprint("     &");
           }
         }
-<<<<<<< HEAD
+// <<<<<<< HEAD
         else if( is_free_format && str[0] != '!')
-=======
-        else if( is_free_format )
->>>>>>> parent of d62c26a... Update to better handle C and Fortran
+// =======
+        // else if( is_free_format )
+// >>>>>>> parent of d62c26a... Update to better handle C and Fortran
         {
           // warn if successful wrapping is impossible
           if( str.size() > usable_cols )
@@ -90,20 +90,20 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocat
           unp->u_sage->curprint("&");
           // 
           unp->cur.insert_newline(1);
-<<<<<<< HEAD
+// <<<<<<< HEAD
           unp->u_sage->curprint("&");
         }
         else
           printf("Warning: long line not wrapped (unknown output format)\n");
       }
-=======
-                unp->u_sage->curprint("&");
-            }
-            else
-                printf("Warning: long line not wrapped (unknown output format)\n");
-        }
->>>>>>> parent of d62c26a... Update to better handle C and Fortran
-    }
+// =======
+//                 unp->u_sage->curprint("&");
+//             }
+//             else
+//                 printf("Warning: long line not wrapped (unknown output format)\n");
+//         }
+// >>>>>>> parent of d62c26a... Update to better handle C and Fortran
+//     }
 
     unp->u_sage->curprint(str);
      
@@ -125,7 +125,7 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str, SgLocat
       unp->u_sage->curprint("&");
       // 
       unp->cur.insert_newline(1);
-    }  else if (is_fixed_format) {
+    }  else if (is_fortran90 && is_fixed_format) {
       int usable_cols = 72;
       int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
       int free_cols = usable_cols - used_cols;

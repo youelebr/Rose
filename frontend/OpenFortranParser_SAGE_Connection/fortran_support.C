@@ -465,10 +465,11 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
    if (targetLocatedNode == NULL) return; 
   //DBG_MAQAO
   #if 0
+
      printf ("In resetSourcePosition targetLocatedNode = %p = %s sourceLocatedNode = %p = %s \n",
           targetLocatedNode,targetLocatedNode->class_name().c_str(),
           sourceLocatedNode,sourceLocatedNode->class_name().c_str());
-  #endif
+#endif
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(targetLocatedNode != NULL);

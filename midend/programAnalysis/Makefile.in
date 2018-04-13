@@ -126,14 +126,15 @@ DIST_COMMON = README $(am__include_HEADERS_DIST) $(noinst_HEADERS) \
 
 subdir = src/midend/programAnalysis
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/acmacros/canonicalize-symlink.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/libltdl/acinclude.m4 \
+	$(top_srcdir)/acmacros/canonicalize-symlink.m4 \
 	$(top_srcdir)/acmacros/compiler-ar.m4 \
 	$(top_srcdir)/acmacros/compiler-id.m4 \
 	$(top_srcdir)/acmacros/configure-log.m4 \
 	$(top_srcdir)/acmacros/pkg.m4 $(top_srcdir)/acmacros/upc.m4 \
 	$(top_srcdir)/config/EDG.m4 $(top_srcdir)/config/ROSE.m4 \
 	$(top_srcdir)/config/ac_pkg_swig.m4 \
-	$(top_srcdir)/config/acinclude.m4 $(top_srcdir)/config/argz.m4 \
+	$(top_srcdir)/config/acinclude.m4 \
 	$(top_srcdir)/config/ax_boost_base.m4 \
 	$(top_srcdir)/config/ax_boost_date_time.m4 \
 	$(top_srcdir)/config/ax_boost_filesystem.m4 \
@@ -152,11 +153,7 @@ am__aclocal_m4_deps = $(top_srcdir)/acmacros/canonicalize-symlink.m4 \
 	$(top_srcdir)/config/determine-os.m4 \
 	$(top_srcdir)/config/enable-rosehpct.m4 \
 	$(top_srcdir)/config/generate-backend-compiler-specific-headers.m4 \
-	$(top_srcdir)/config/libtool.m4 $(top_srcdir)/config/libxml.m4 \
-	$(top_srcdir)/config/ltdl.m4 $(top_srcdir)/config/ltoptions.m4 \
-	$(top_srcdir)/config/ltsugar.m4 \
-	$(top_srcdir)/config/ltversion.m4 \
-	$(top_srcdir)/config/lt~obsolete.m4 \
+	$(top_srcdir)/config/libxml.m4 \
 	$(top_srcdir)/config/mdl_have_opengl.m4 \
 	$(top_srcdir)/config/minitermite.m4 \
 	$(top_srcdir)/config/qrose_indigo_1.m4 \
@@ -493,7 +490,6 @@ AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
 AR = @AR@
-ARGZ_H = @ARGZ_H@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -561,7 +557,6 @@ C_OPTIMIZE = @C_OPTIMIZE@
 C_WARNINGS = @C_WARNINGS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
-DLLTOOL = @DLLTOOL@
 DOT_TO_GML_TRANSLATOR_FALSE = @DOT_TO_GML_TRANSLATOR_FALSE@
 DOT_TO_GML_TRANSLATOR_TRUE = @DOT_TO_GML_TRANSLATOR_TRUE@
 DOXYGEN_ADDED_DIRECTORY_1 = @DOXYGEN_ADDED_DIRECTORY_1@
@@ -575,10 +570,9 @@ DOXYGEN_HIDE_UNDOC_CLASSES = @DOXYGEN_HIDE_UNDOC_CLASSES@
 DOXYGEN_HIDE_UNDOC_MEMBERS = @DOXYGEN_HIDE_UNDOC_MEMBERS@
 DOXYGEN_INTERNAL_DOCS = @DOXYGEN_INTERNAL_DOCS@
 DOXYGEN_USE_TAG_FILE = @DOXYGEN_USE_TAG_FILE@
-DSYMUTIL = @DSYMUTIL@
-DUMPBIN = @DUMPBIN@
 DWARF_INCLUDE = @DWARF_INCLUDE@
 DWARF_LINK = @DWARF_LINK@
+ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -594,7 +588,6 @@ F77 = @F77@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FFLAGS = @FFLAGS@
-FGREP = @FGREP@
 FLTK_include_path = @FLTK_include_path@
 FLTK_libs_path = @FLTK_libs_path@
 GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX = @GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@
@@ -614,7 +607,6 @@ GraphViz_libs_path = @GraphViz_libs_path@
 HAS_LIBRARY_CURL_FALSE = @HAS_LIBRARY_CURL_FALSE@
 HAS_LIBRARY_CURL_TRUE = @HAS_LIBRARY_CURL_TRUE@
 HS_CONFIG_OPTS = @HS_CONFIG_OPTS@
-INCLTDL = @INCLTDL@
 INCLUDE_COMPASS_MAKEFILE_INC = @INCLUDE_COMPASS_MAKEFILE_INC@
 INDENT = @INDENT@
 INSTALL_DATA = @INSTALL_DATA@
@@ -635,15 +627,11 @@ JAVAH = @JAVAH@
 JAVA_JVM_INCLUDE = @JAVA_JVM_INCLUDE@
 JAVA_JVM_LINK = @JAVA_JVM_LINK@
 JAVA_PATH = @JAVA_PATH@
-LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBADD_DL = @LIBADD_DL@
-LIBADD_DLD_LINK = @LIBADD_DLD_LINK@
-LIBADD_DLOPEN = @LIBADD_DLOPEN@
-LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
 LIBFFI_CFLAGS = @LIBFFI_CFLAGS@
 LIBFFI_LIBS = @LIBFFI_LIBS@
 LIBLTDL = @LIBLTDL@
@@ -651,18 +639,11 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBS_WITH_RPATH = @LIBS_WITH_RPATH@
 LIBTOOL = @LIBTOOL@
-LIPO = @LIPO@
 LLVM_CONFIG = @LLVM_CONFIG@
 LN_S = @LN_S@
-LTDLDEPS = @LTDLDEPS@
 LTDLINCL = @LTDLINCL@
-LTDLOPEN = @LTDLOPEN@
 LTLIBOBJS = @LTLIBOBJS@
-LT_CONFIG_H = @LT_CONFIG_H@
-LT_DLLOADERS = @LT_DLLOADERS@
-LT_DLPREOPEN = @LT_DLPREOPEN@
 MAKEINFO = @MAKEINFO@
-MANIFEST_TOOL = @MANIFEST_TOOL@
 MAPLE_INCLUDES = @MAPLE_INCLUDES@
 MAPLE_LIBS = @MAPLE_LIBS@
 MD5 = @MD5@
@@ -677,10 +658,7 @@ MYSQL_CONFIG = @MYSQL_CONFIG@
 MYSQL_INCLUDE = @MYSQL_INCLUDE@
 MYSQL_LDFLAGS = @MYSQL_LDFLAGS@
 MYSQL_VERSION = @MYSQL_VERSION@
-NM = @NM@
-NMEDIT = @NMEDIT@
 OBJ = @OBJ@
-OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OLD_COMPILER_VERSION_FALSE = @OLD_COMPILER_VERSION_FALSE@
 OLD_COMPILER_VERSION_TRUE = @OLD_COMPILER_VERSION_TRUE@
@@ -714,14 +692,11 @@ OS_VENDOR_UBUNTU_FALSE = @OS_VENDOR_UBUNTU_FALSE@
 OS_VENDOR_UBUNTU_TRUE = @OS_VENDOR_UBUNTU_TRUE@
 OS_release = @OS_release@
 OS_vendor = @OS_vendor@
-OTOOL = @OTOOL@
-OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
-PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PACKAGE_VERSION_NUMERIC = @PACKAGE_VERSION_NUMERIC@
 PATH_SEPARATOR = @PATH_SEPARATOR@
@@ -1041,7 +1016,6 @@ ROSE_YICES = @ROSE_YICES@
 ROSE_YICES_PREFIX = @ROSE_YICES_PREFIX@
 RT_LIBS = @RT_LIBS@
 SCOPLIB_PATH = @SCOPLIB_PATH@
-SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SQLITE3_CFLAGS = @SQLITE3_CFLAGS@
@@ -1111,10 +1085,8 @@ YACC = @YACC@
 YFLAGS = @YFLAGS@
 absolute_path_srcdir = @absolute_path_srcdir@
 ac_boost_path = @ac_boost_path@
-ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
-ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 ac_ct_F77 = @ac_ct_F77@
 ac_ct_FC = @ac_ct_FC@
 ac_ct_MPICXX = @ac_ct_MPICXX@
@@ -1169,8 +1141,6 @@ libexecdir = @libexecdir@
 llvm_path = @llvm_path@
 localedir = @localedir@
 localstatedir = @localstatedir@
-ltdl_LIBOBJS = @ltdl_LIBOBJS@
-ltdl_LTLIBOBJS = @ltdl_LTLIBOBJS@
 mandir = @mandir@
 maple_path = @maple_path@
 mkdir_p = @mkdir_p@
@@ -1192,7 +1162,6 @@ rted_path = @rted_path@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 subdirs = @subdirs@
-sys_symbol_underscore = @sys_symbol_underscore@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_pwd = @top_pwd@
